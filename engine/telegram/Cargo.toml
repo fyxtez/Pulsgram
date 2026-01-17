@@ -8,3 +8,4 @@ grammers-client = "0.8.1"
 grammers-mtsender = "0.8.1"
 grammers-session = "0.8.0"
 tokio = { version = "1.49.0", features = ["full"] }
+publisher = { path = "../publisher" }

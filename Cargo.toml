@@ -1,6 +1,6 @@
 [workspace]
-members = ["app","engine/telegram"
-]
+members = ["app", "engine/publisher","engine/telegram"
+, "engine/test_listener"]
 resolver = "2"
 
 [profile.release]

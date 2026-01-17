@@ -33,7 +33,9 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "dotenv",
+ "publisher",
  "telegram",
+ "test_listener",
  "tokio",
 ]
 
@@ -825,6 +827,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "publisher"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -990,7 +999,15 @@ dependencies = [
  "grammers-client",
  "grammers-mtsender",
  "grammers-session",
+ "publisher",
  "tokio",
+]
+
+[[package]]
+name = "test_listener"
+version = "0.1.0"
+dependencies = [
+ "publisher",
 ]
 
 [[package]]

@@ -13,10 +13,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     let client = Arc::new(client);
 
+    let bus = Arc::new(publisher::new_event_bus());
+    
     tokio::spawn(handle_updates(
         Arc::clone(&client),
         updates_receiver,
+        Arc::clone(&bus),
     ));
+    
+    tokio::spawn(test_listener::run(Arc::clone(&bus)));
 
     tokio::signal::ctrl_c().await?;
 
