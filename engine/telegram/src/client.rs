@@ -32,7 +32,7 @@ pub async fn connect_client(session_path: &str) -> Result<ConnectClientReturnTyp
 
     let client = Client::new(&sender_pool);
 
-    let _ = tokio::spawn(sender_pool.runner.run());
+    tokio::spawn(sender_pool.runner.run());
 
     if !client.is_authorized().await? {
         let token = client
