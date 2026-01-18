@@ -3,7 +3,7 @@ use std::sync::Arc;
 use grammers_client::Client;
 use grammers_client::types::Peer;
 
-pub async fn run(client: Arc<Client>, from_peer: &Peer, to_peer: &Peer, bus: Arc<&publisher::EventBus>) {
+pub async fn run(client: Arc<Client>, from_peer: Peer, to_peer: Peer, bus: Arc<publisher::EventBus>) {
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {
@@ -21,6 +21,6 @@ pub async fn run(client: Arc<Client>, from_peer: &Peer, to_peer: &Peer, bus: Arc
         }
 
         //TODO: Add message sender/peer who sent the message.
-        let _ = client.send_message(to_peer, message_text).await; //TODO: Handle error
+        let _ = client.send_message(&to_peer, message_text).await; //TODO: Handle error
     }
 }
