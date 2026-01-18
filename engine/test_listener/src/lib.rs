@@ -6,6 +6,6 @@ pub async fn run(bus: Arc<EventBus>) {
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {
-        println!("[TEST_LISTENER] {}", event.text);
+        println!("[TEST_LISTENER] {}", event.message.text());
     }
 }

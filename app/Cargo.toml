@@ -10,3 +10,4 @@ tokio = { version = "1.49.0", features = ["full"] }
 telegram = { path = "../engine/telegram" }
 publisher = { path = "../engine/publisher" }
 test_listener = { path = "../engine/test_listener" }
+forwarder = { path = "../engine/forwarder" }

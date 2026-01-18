@@ -1,5 +1,5 @@
 [workspace]
-members = ["app", "engine/publisher","engine/telegram"
+members = ["app", "engine/forwarder", "engine/publisher","engine/telegram"
 , "engine/test_listener"]
 resolver = "2"
 
