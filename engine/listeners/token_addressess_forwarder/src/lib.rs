@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use blockchains_address_extractor::extract_token_address_from_message_text;
@@ -5,7 +6,8 @@ use grammers_client::Client;
 use grammers_client::types::Peer;
 use publisher::EventBus;
 
-pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, forwarding_peer: Peer) {
+// TODO: Ignored senders implementation
+pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, forwarding_peer: Peer, _ignored_senders: HashSet<&'static str>) {
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {

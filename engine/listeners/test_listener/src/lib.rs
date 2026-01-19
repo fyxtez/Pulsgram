@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use publisher::EventBus; //TODO: This shouldnt be directly from publisher rather from a shared crate
+use publisher::EventBus;
 
 pub async fn run(bus: Arc<EventBus>) {
     let mut rx = bus.subscribe();

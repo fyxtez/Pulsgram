@@ -1,19 +1,11 @@
+pub mod types;
+
 use std::sync::Arc;
 
 use grammers_client::types::update::Message;
 use tokio::sync::broadcast;
 
-#[derive(Debug, Clone)]
-pub enum EventTag {
-    Token,
-    Other,
-}
-
-#[derive(Debug, Clone)]
-pub struct TgEvent {
-    pub message: Message,
-    pub tag: EventTag,
-}
+use crate::types::{EventTag, TgEvent};
 
 pub async fn broadcast(bus: Arc<broadcast::Sender<TgEvent>>, message: Message, tag: EventTag) {
     let event = TgEvent { message, tag };

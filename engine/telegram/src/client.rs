@@ -120,7 +120,7 @@ pub async fn handle_updates(
                 tokio::spawn(publisher::broadcast(
                     event_bus.clone(),
                     message,
-                    publisher::EventTag::Other,
+                    publisher::types::EventTag::Other,
                 ));
             }
             _ => {

@@ -1,10 +1,13 @@
-use std::sync::Arc;
+mod utils;
 
 use dotenv::dotenv;
+use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{get_dialogs, get_peer_by_bare_id, print_dialogs, print_peer_data},
 };
+
+use crate::utils::must_get_peer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,20 +24,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bus = Arc::new(publisher::new_event_bus());
 
-    let from_peer = get_peer_by_bare_id(&client, 1649642332)
-        .await?
-        .expect("Could not find the from_peer in dialogs");
-
-    let to_peer = get_peer_by_bare_id(&client, 5173657056)
-        .await?
-        .expect("Could not find the to_peer in dialogs");
-
-    let tokens_peer = get_peer_by_bare_id(&client, 5144995821)
-        .await?
-        .expect("Could not find the to_peer in dialogs");
+    let from_peer = must_get_peer(&client, 1649642332, "from").await?;
+    let to_peer = must_get_peer(&client, 5173657056, "to").await?;
+    let tokens_peer = must_get_peer(&client, 5144995821, "tokens").await?;
 
     // TODO
-    let _ignore_names_for_peer_senders = [String::from("Phanes"), String::from("Rick")];
+    let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
     tokio::spawn(handle_updates(
         Arc::clone(&client),
@@ -60,6 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&bus),
         Arc::clone(&client),
         tokens_peer,
+        _ignored_senders
     ));
 
     tokio::signal::ctrl_c().await?;
