@@ -1,7 +1,13 @@
-pub async fn get_replied_message_text(client: &grammers_client::Client, message: &grammers_client::types::Message) -> Option<String> {
+pub async fn get_replied_message_text(
+    client: &grammers_client::Client,
+    message: &grammers_client::types::Message,
+) -> Option<String> {
     if let Some(replied_msg_id) = message.reply_to_message_id() {
-        let msgs = client.get_messages_by_id(message.peer().unwrap(), &[replied_msg_id]).await.ok()?;
-        let replied_msg = msgs.get(0)?.as_ref()?;
+        let msgs = client
+            .get_messages_by_id(message.peer().unwrap(), &[replied_msg_id])
+            .await
+            .ok()?;
+        let replied_msg = msgs.first()?.as_ref()?;
         Some(replied_msg.text().to_string())
     } else {
         None

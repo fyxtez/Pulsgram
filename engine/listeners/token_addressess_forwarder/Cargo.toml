@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 blockchains_address_extractor = "1.0.0"
 grammers-client = "0.8.1"
-publisher = { path = "../publisher" }
+publisher = { path = "../../publisher" }

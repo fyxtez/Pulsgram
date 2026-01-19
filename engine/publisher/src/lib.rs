@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use tokio::sync::broadcast;
 use grammers_client::types::update::Message;
+use tokio::sync::broadcast;
 
 #[derive(Debug, Clone)]
 pub enum EventTag {
@@ -15,11 +15,7 @@ pub struct TgEvent {
     pub tag: EventTag,
 }
 
-pub async fn broadcast(
-    bus: Arc<broadcast::Sender<TgEvent>>,
-    message: Message,
-    tag: EventTag,
-) {
+pub async fn broadcast(bus: Arc<broadcast::Sender<TgEvent>>, message: Message, tag: EventTag) {
     let event = TgEvent { message, tag };
 
     let _ = bus.send(event);

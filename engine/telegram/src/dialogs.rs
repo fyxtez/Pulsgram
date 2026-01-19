@@ -36,11 +36,13 @@ pub async fn get_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError
     Ok(dialogs)
 }
 
-pub async fn get_peer_by_bare_id(client: &Client, bare_id_to_find: i64) -> Result<Option<Peer>, InvocationError> {
+pub async fn get_peer_by_bare_id(
+    client: &Client,
+    bare_id_to_find: i64,
+) -> Result<Option<Peer>, InvocationError> {
     let mut iter_dialogs = client.iter_dialogs();
 
     while let Some(dialog) = iter_dialogs.next().await? {
-        
         let dialog_bare_id = match &dialog.peer {
             Peer::User(user) => user.bare_id(),
             Peer::Group(group) => group.id().bare_id(),
@@ -67,23 +69,33 @@ pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
         };
 
         println!("Dialog ID: {}, Name: {}, Type: {:?}", id, name, dialog_type);
-
     }
 
     Ok(())
 }
 
-
 pub fn print_peer_data(peer: &Peer) {
     match peer {
         Peer::User(user) => {
-            println!("User Peer - ID: {}, Username: {:?}", user.bare_id(), user.username());
+            println!(
+                "User Peer - ID: {}, Username: {:?}",
+                user.bare_id(),
+                user.username()
+            );
         }
         Peer::Group(group) => {
-            println!("Group Peer - ID: {}, Title: {:?}", group.id().bare_id(), group.title());
+            println!(
+                "Group Peer - ID: {}, Title: {:?}",
+                group.id().bare_id(),
+                group.title()
+            );
         }
         Peer::Channel(channel) => {
-            println!("Channel Peer - ID: {}, Title: {:?}", channel.bare_id(), channel.title());
+            println!(
+                "Channel Peer - ID: {}, Title: {:?}",
+                channel.bare_id(),
+                channel.title()
+            );
         }
     }
 }

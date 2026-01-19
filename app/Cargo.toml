@@ -9,7 +9,7 @@ tokio = { version = "1.49.0", features = ["full"] }
 
 telegram = { path = "../engine/telegram" }
 publisher = { path = "../engine/publisher" }
-test_listener = { path = "../engine/test_listener" }
-forwarder = { path = "../engine/forwarder" }
-token_addressess_forwarder = { path = "../engine/token_addressess_forwarder" }
+test_listener = { path = "../engine/listeners/test_listener" }
+forwarder = { path = "../engine/listeners/forwarder" }
+token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
 grammers-client = "0.8.1"

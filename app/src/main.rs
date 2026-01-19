@@ -33,12 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .expect("Could not find the to_peer in dialogs");
 
-
     // TODO
-    let ignore_names_for_peer_senders = vec![
-        String::from("Phanes"),
-        String::from("Rick"),
-    ];
+    let _ignore_names_for_peer_senders = [String::from("Phanes"), String::from("Rick")];
 
     tokio::spawn(handle_updates(
         Arc::clone(&client),
