@@ -7,7 +7,7 @@ use grammers_client::types::Peer;
 use publisher::EventBus;
 
 // TODO: Ignored senders implementation
-pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, forwarding_peer: Peer, _ignored_senders: HashSet<&'static str>) {
+pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, forwarding_peer: Peer, _ignored_senders: HashSet<&'static str>, _ignored_peers: HashSet<&Peer>) {
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {
