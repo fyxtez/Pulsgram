@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use grammers_client::{Client, types::Peer};
+use telegram_types::{Client,Peer};
 use telegram::dialogs::get_peer_by_bare_id;
 
 

@@ -2,9 +2,9 @@ mod state;
 mod utils;
 
 use api::start_api_server;
+// use db::{connect, run_migrations};
 use dotenv::dotenv;
-use grammers_client::types::Peer;
-use tokio::net::TcpListener;
+use telegram_types::Peer;
 use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
@@ -65,10 +65,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ignored_peers,
     ));
 
+    // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
+
+    // run_migrations("../migrations", db);
+
+
     let state = state::AppState {
     };
 
-    let shared_state = Arc::new(state);
+    let _shared_state = Arc::new(state);
 
     start_api_server().await;
 

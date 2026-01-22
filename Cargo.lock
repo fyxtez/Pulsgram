@@ -53,12 +53,12 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "api",
+ "db",
  "dotenv",
  "forwarder",
- "grammers-client",
  "publisher",
  "telegram",
- "test_listener",
+ "telegram_types",
  "token_addressess_forwarder",
  "tokio",
 ]
@@ -311,6 +311,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "db"
+version = "0.1.0"
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -376,8 +380,8 @@ dependencies = [
 name = "forwarder"
 version = "0.1.0"
 dependencies = [
- "grammers-client",
  "publisher",
+ "telegram_types",
  "tokio",
 ]
 
@@ -1113,7 +1117,7 @@ dependencies = [
 name = "publisher"
 version = "0.1.0"
 dependencies = [
- "grammers-client",
+ "telegram_types",
  "tokio",
 ]
 
@@ -1394,10 +1398,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_listener"
+name = "telegram_types"
 version = "0.1.0"
 dependencies = [
- "publisher",
+ "grammers-client",
 ]
 
 [[package]]
@@ -1405,8 +1409,8 @@ name = "token_addressess_forwarder"
 version = "0.1.0"
 dependencies = [
  "blockchains_address_extractor",
- "grammers-client",
  "publisher",
+ "telegram_types",
 ]
 
 [[package]]

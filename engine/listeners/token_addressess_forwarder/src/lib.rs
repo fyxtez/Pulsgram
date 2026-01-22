@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use blockchains_address_extractor::extract_token_address_from_message_text;
-use grammers_client::Client;
-use grammers_client::types::Peer;
+use telegram_types::Client;
+use telegram_types::Peer;
 use publisher::EventBus;
 
 // TODO: Ignored senders implementation

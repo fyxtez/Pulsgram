@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use grammers_client::Client;
-use grammers_client::types::Peer;
+use telegram_types::Client;
+use telegram_types::Peer;
 
 pub async fn run(
     client: Arc<Client>,

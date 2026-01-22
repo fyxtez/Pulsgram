@@ -2,7 +2,7 @@ pub mod types;
 
 use std::sync::Arc;
 
-use grammers_client::types::update::Message;
+use telegram_types::Message;
 use tokio::sync::broadcast;
 
 use crate::types::{EventTag, TgEvent};

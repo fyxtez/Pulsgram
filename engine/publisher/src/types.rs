@@ -1,4 +1,4 @@
-use grammers_client::types::update::Message;
+use telegram_types::Message;
 
 #[derive(Debug, Clone)]
 pub enum EventTag {

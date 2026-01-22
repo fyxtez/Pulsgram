@@ -5,13 +5,13 @@ use std::{
 };
 
 use grammers_client::Update;
-use grammers_client::{Client, SignInError, UpdatesConfiguration};
+use grammers_client::{SignInError, UpdatesConfiguration};
 use grammers_mtsender::SenderPool;
 use grammers_session::{storages::SqliteSession, updates::UpdatesLike};
 use tokio::sync::mpsc::UnboundedReceiver;
-
 use crate::config::load_tg_client_config;
 
+use grammers_client::Client;
 pub struct ConnectClientReturnType {
     pub client: Client,
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
