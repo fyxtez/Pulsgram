@@ -13,6 +13,7 @@ publisher = { path = "../engine/publisher" }
 forwarder = { path = "../engine/listeners/forwarder" }
 analysis = { path = "../engine/listeners/analysis" }
 token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
+app_state = {path = "../engine/app_state"}
 api = {path = "../engine/api"}
 dashmap = "6.1.0"
 serde = { version = "1.0.228", features = ["derive"] }

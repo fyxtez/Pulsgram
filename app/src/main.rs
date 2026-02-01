@@ -1,4 +1,3 @@
-mod state;
 mod utils;
 
 use api::start_api_server;
@@ -8,13 +7,10 @@ use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{
-        get_dialogs,
-        peer_to_dialog_data, print_dialogs, print_peer_data,
+        get_dialogs, get_peer, normalize_dialogs_into_data, peer_to_dialog_data, print_dialogs, print_peer_data
     },
 };
 use telegram_types::Peer;
-
-use crate::utils::{dump_dialogs_to_json, get_peer};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -58,20 +54,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _ignored_peers: HashSet<&Peer> = HashSet::new();
 
-    let dialogs_data = Arc::new(dashmap::DashMap::new());
+    let dialogs_data = normalize_dialogs_into_data(dialogs);
 
-    for dialog in dialogs {
-        let peer = dialog.peer();
-        let (id, dialog_data) = peer_to_dialog_data(peer);
-
-        dialogs_data.insert(id, dialog_data);
-    }
+    println!("Dialogs normalized");
 
     // TODO: Ignore Ph & Ri
 
     // dump_dialogs_to_json(&dialogs_data, "dialogs.json").unwrap();
 
-    let state = state::AppState { dialogs_data };
+    let state = app_state::AppState { dialogs_data };
 
     let shared_state = Arc::new(state);
 
@@ -101,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // run_migrations("../migrations", db);
 
-    start_api_server().await;
+    start_api_server("127.0.0.1",8181,shared_state).await;
 
     tokio::signal::ctrl_c().await?;
 

@@ -1,0 +1,8 @@
+[package]
+name = "app_state"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dashmap = "6.1.0"
+telegram = {path = "../telegram"}

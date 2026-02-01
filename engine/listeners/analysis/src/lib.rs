@@ -14,6 +14,8 @@ pub async fn run(
 ) {
     let mut rx = bus.subscribe();
 
+    println!("Telegram analyzer running...");
+
     while let Ok(event) = rx.recv().await {
         let message = event.message;
 

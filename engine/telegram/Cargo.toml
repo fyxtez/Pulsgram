@@ -10,3 +10,4 @@ grammers-session = "0.8.0"
 tokio = { version = "1.49.0", features = ["full"] }
 publisher = { path = "../publisher" }
 serde = { version = "1.0.228", features = ["derive"] }
+dashmap = "6.1.0"

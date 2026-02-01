@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use grammers_client::Client;
 use grammers_client::InvocationError;
@@ -99,6 +100,16 @@ pub async fn get_peers_by_bare_ids(
     Ok(found)
 }
 
+
+pub async fn get_peer(
+    client: &Arc<Client>,
+    bare_id: i64,
+) -> Result<Peer, Box<dyn std::error::Error>> {
+    get_peer_by_bare_id(client, bare_id)
+        .await?
+        .ok_or_else(|| format!("Could not find peer with ID: {}", bare_id).into())
+}
+
 pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
     for dialog in dialogs {
         let dialog_type = get_dialog_type(dialog);
@@ -180,4 +191,18 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
             (id, data)
         }
     }
+}
+
+
+pub fn normalize_dialogs_into_data(dialogs:Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
+    let dialogs_data: Arc<dashmap::DashMap<i64,DialogData>> = Arc::new(dashmap::DashMap::new());
+
+    for dialog in dialogs {
+        let peer = dialog.peer();
+        let (id, dialog_data) = peer_to_dialog_data(peer);
+
+        dialogs_data.insert(id, dialog_data);
+    }
+
+    dialogs_data
 }

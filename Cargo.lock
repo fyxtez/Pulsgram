@@ -52,6 +52,7 @@ dependencies = [
 name = "api"
 version = "0.1.0"
 dependencies = [
+ "app_state",
  "axum",
  "axum-extra",
  "serde",
@@ -65,6 +66,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "api",
+ "app_state",
  "dashmap",
  "dotenv",
  "forwarder",
@@ -75,6 +77,14 @@ dependencies = [
  "telegram_types",
  "token_addressess_forwarder",
  "tokio",
+]
+
+[[package]]
+name = "app_state"
+version = "0.1.0"
+dependencies = [
+ "dashmap",
+ "telegram",
 ]
 
 [[package]]
@@ -1427,6 +1437,7 @@ checksum = "0bf256ce5efdfa370213c1dabab5935a12e49f2c58d15e9eac2870d3b4f27263"
 name = "telegram"
 version = "0.1.0"
 dependencies = [
+ "dashmap",
  "grammers-client",
  "grammers-mtsender",
  "grammers-session",
