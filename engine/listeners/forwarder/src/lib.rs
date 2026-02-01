@@ -16,7 +16,7 @@ pub async fn run(
         let message_peer_id = message.peer_id();
 
         if message_peer_id != from_peer.id() {
-            return;
+            continue;
         }
 
         let mut message_text = message.text().to_string();

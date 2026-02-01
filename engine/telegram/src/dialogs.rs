@@ -2,8 +2,9 @@ use grammers_client::Client;
 use grammers_client::InvocationError;
 use grammers_client::types::Dialog;
 use grammers_client::types::Peer;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize,Clone,PartialEq, Eq)]
 #[repr(u8)]
 pub enum DialogType {
     User = 0,
@@ -11,7 +12,7 @@ pub enum DialogType {
     Channel = 2,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize,Clone)]
 pub struct DialogData {
     pub name: String,
     pub username: Option<String>,

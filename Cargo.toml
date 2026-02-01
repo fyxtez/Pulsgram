@@ -1,6 +1,6 @@
 [workspace]
 members = ["app", "engine/listeners/token_addressess_forwarder", "engine/listeners/forwarder", "engine/publisher","engine/telegram"
-, "engine/api", "engine/db", "engine/telegram_types"]
+, "engine/api", "engine/telegram_types", "engine/listeners/analysis"]
 resolver = "2"
 
 [profile.release]

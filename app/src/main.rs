@@ -8,12 +8,13 @@ use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{
-        DialogData, DialogType, get_dialog_type, get_dialogs, get_peer_by_bare_id, peer_to_dialog_data, print_dialogs, print_peer_data
+        DialogData, DialogType, get_dialog_type, get_dialogs, get_peer_by_bare_id,
+        peer_to_dialog_data, print_dialogs, print_peer_data,
     },
 };
 use telegram_types::Peer;
 
-use crate::utils::must_get_peer;
+use crate::utils::{dump_dialogs_to_json, get_peer};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,6 +27,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         updates_receiver,
     } = connect_client(session_path).await?;
 
+    println!("Telegram Client connected.");
+
     let client = Arc::new(client);
 
     let bus = Arc::new(publisher::new_event_bus());
@@ -36,21 +39,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&bus),
     ));
 
+    println!("Updates handler spawned.");
+
     let dialogs = get_dialogs(&client).await?;
 
-    let from_peer = must_get_peer(&client, 1649642332, "from").await?;
-    let to_peer = must_get_peer(&client, 5173657056, "to").await?;
-    let tokens_peer = must_get_peer(&client, 5144995821, "tokens").await?;
+    println!("Telegram dialogs loaded.");
+
+    let from_peer = get_peer(&client, 1649642332).await?;
+    let to_peer = get_peer(&client, 5173657056).await?;
+    let tokens_peer = get_peer(&client, 5144995821).await?;
+    let errors_peer = get_peer(&client, 3876244916).await?;
+
+    println!("Peers fetched.");
 
     // TODO
     let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
     let _ignored_peers: HashSet<&Peer> = HashSet::new();
 
-    // dodaj neki sa chartuman i probaj dal ce da ti kupi
-    // let approved_peer_ids: Vec<i64> = vec![2040892468, 2450649967, 2227629400];
-
-        let dialogs_data = dashmap::DashMap::new();
+    let dialogs_data = Arc::new(dashmap::DashMap::new());
 
     for dialog in dialogs {
         let peer = dialog.peer();
@@ -59,18 +66,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         dialogs_data.insert(id, dialog_data);
     }
 
+    // TODO: Ignore Ph & Ri
+
+    // dump_dialogs_to_json(&dialogs_data, "dialogs.json").unwrap();
+
     let state = state::AppState { dialogs_data };
 
-    let _shared_state = Arc::new(state);
-
-    dbg!(&_shared_state.dialogs_data);
-
-    // tokio::spawn(buyer::run(
-    //     Arc::clone(&client),
-    //     to_peer.clone(),
-    //     Arc::clone(&bus),
-    //     approved_peer_ids,
-    // ));
+    let shared_state = Arc::new(state);
 
     // tokio::spawn(forwarder::run(
     //     Arc::clone(&client),
@@ -87,12 +89,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     _ignored_peers,
     // ));
 
-    // tokio::spawn(groups_analysis::run(Arc::clone(&client), Arc::clone(&bus)));
+    tokio::spawn(analysis::run(
+        Arc::clone(&client),
+        Arc::clone(&bus),
+        shared_state.dialogs_data.clone(),
+        errors_peer.clone(),
+    ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
 
     // run_migrations("../migrations", db);
-
 
     start_api_server().await;
 
