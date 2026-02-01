@@ -1,10 +1,13 @@
+use std::collections::HashMap;
+use std::collections::HashSet;
+
 use grammers_client::Client;
 use grammers_client::InvocationError;
 use grammers_client::types::Dialog;
 use grammers_client::types::Peer;
 use serde::Serialize;
 
-#[derive(Debug,Serialize,Clone,PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum DialogType {
     User = 0,
@@ -12,13 +15,12 @@ pub enum DialogType {
     Channel = 2,
 }
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DialogData {
     pub name: String,
     pub username: Option<String>,
     pub kind: DialogType,
 }
-
 
 pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     match dialog.peer {
@@ -66,6 +68,37 @@ pub async fn get_peer_by_bare_id(
     Ok(None)
 }
 
+pub async fn get_peers_by_bare_ids(
+    client: &Client,
+    bare_ids: Vec<i64>,
+) -> Result<HashMap<i64, Peer>, InvocationError> {
+    let wanted: HashSet<i64> = bare_ids.into_iter().collect();
+    let mut found: HashMap<i64, Peer> = HashMap::new();
+
+    let mut iter_dialogs = client.iter_dialogs();
+
+    while let Some(dialog) = iter_dialogs.next().await? {
+        let peer = dialog.peer;
+
+        let bare_id = match &peer {
+            Peer::User(user) => user.bare_id(),
+            Peer::Group(group) => group.id().bare_id(),
+            Peer::Channel(channel) => channel.bare_id(),
+        };
+
+        if wanted.contains(&bare_id) {
+            found.insert(bare_id, peer);
+
+            // early exit if we already found everything
+            if found.len() == wanted.len() {
+                break;
+            }
+        }
+    }
+
+    Ok(found)
+}
+
 pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
     for dialog in dialogs {
         let dialog_type = get_dialog_type(dialog);
@@ -108,7 +141,6 @@ pub fn print_peer_data(peer: &Peer) {
         }
     }
 }
-
 
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     match peer {

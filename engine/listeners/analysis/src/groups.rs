@@ -1,8 +1,6 @@
 use telegram_types::Message;
 
-pub async fn handle(
-    message: &Message,
-) {
+pub async fn handle(message: &Message) {
     //TODO: Sometimes this might not work
     let sender = match message.sender() {
         Some(s) => s,
@@ -12,20 +10,16 @@ pub async fn handle(
         }
     };
 
-    let name = sender
-        .name()
-        .unwrap_or("NO_NAME")
-        .to_string();
+    let name = sender.name().unwrap_or("NO_NAME").to_string();
 
-    let username = sender
-        .username()
-        .unwrap_or("NO_USERNAME")
-        .to_string();
+    let _username = sender.username().unwrap_or("NO_USERNAME").to_string();
 
+    if name.contains("Rick") || name.contains("Phanes") {
+        return;
+    }
 
-        if name.contains("Rick") || name.contains("Phanes"){
-            return;
-        }
-
-        println!("{}",format!("Group msg from: {} said: \n {}",name,message.text()));
+    println!(
+        "{}",
+        format!("Group msg from: {} said: \n {}", name, message.text())
+    );
 }

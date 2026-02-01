@@ -1,15 +1,10 @@
 use std::sync::Arc;
 
-use telegram_types::{Client,Peer};
-use telegram::dialogs::get_peer_by_bare_id;
 use dashmap::DashMap;
 use serde::Serialize;
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::BufWriter,
-    path::Path,
-};
+use std::{collections::HashMap, fs::File, io::BufWriter, path::Path};
+use telegram::dialogs::get_peer_by_bare_id;
+use telegram_types::{Client, Peer};
 
 pub async fn get_peer(
     client: &Arc<Client>,
@@ -17,9 +12,8 @@ pub async fn get_peer(
 ) -> Result<Peer, Box<dyn std::error::Error>> {
     get_peer_by_bare_id(client, bare_id)
         .await?
-        .ok_or_else(|| format!("Could not find peer with ID: {}",bare_id).into())
+        .ok_or_else(|| format!("Could not find peer with ID: {}", bare_id).into())
 }
-
 
 pub fn dump_dialogs_to_json<K, V, P>(
     dialogs: &DashMap<K, V>,

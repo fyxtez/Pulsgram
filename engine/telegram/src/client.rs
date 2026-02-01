@@ -4,12 +4,12 @@ use std::{
     sync::Arc,
 };
 
-use grammers_client::{Update, types::Peer};
+use crate::config::load_tg_client_config;
 use grammers_client::{SignInError, UpdatesConfiguration};
+use grammers_client::{Update, types::Peer};
 use grammers_mtsender::SenderPool;
 use grammers_session::{storages::SqliteSession, updates::UpdatesLike};
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::config::load_tg_client_config;
 
 use grammers_client::Client;
 pub struct ConnectClientReturnType {
@@ -83,9 +83,8 @@ pub async fn handle_updates(
         let update = update.unwrap(); // TODO: handle error properly
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
-
                 // TODO: Probably handle sniper here too.
-                
+
                 tokio::spawn(publisher::broadcast(
                     event_bus.clone(),
                     message,
@@ -99,11 +98,7 @@ pub async fn handle_updates(
     }
 }
 
-pub fn report_error(
-    client: Arc<Client>,
-    errors_peer: Peer,
-    message: String,
-) {
+pub fn report_error(client: Arc<Client>, errors_peer: Peer, message: String) {
     tokio::spawn(async move {
         if let Err(e) = client.send_message(errors_peer, message).await {
             eprintln!("Failed to send error message: {e}");

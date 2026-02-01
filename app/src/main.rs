@@ -8,7 +8,7 @@ use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{
-        DialogData, DialogType, get_dialog_type, get_dialogs, get_peer_by_bare_id,
+        get_dialogs,
         peer_to_dialog_data, print_dialogs, print_peer_data,
     },
 };
@@ -45,6 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Telegram dialogs loaded.");
 
+    // TODO: Use function get_peers_by_bare_ids if you leaving it like this
     let from_peer = get_peer(&client, 1649642332).await?;
     let to_peer = get_peer(&client, 5173657056).await?;
     let tokens_peer = get_peer(&client, 5144995821).await?;

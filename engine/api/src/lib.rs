@@ -1,6 +1,6 @@
 use axum::Router;
-use tokio::net::TcpListener;
 use axum::routing::get;
+use tokio::net::TcpListener;
 
 //TODO: Clear this up by moving port, adddress,... to function parameters or config.
 pub async fn start_api_server() {
