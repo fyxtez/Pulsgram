@@ -83,39 +83,6 @@ pub async fn handle_updates(
         let update = update.unwrap(); // TODO: handle error properly
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
-                println!("Message is {}", message.text());
-
-                // TODO
-                // if let Ok(peer) = message.peer() {
-                //     let msg_peer_name = peer.name();
-                //     let msg_peer_id = peer.id();
-
-                //     println!("Peer: name={:?}, id={:?}", msg_peer_name, msg_peer_id);
-                // } else {
-                //     println!("Could not get peer info");
-                // }
-
-                let peer_id = message.peer_id();
-
-                // let message_id = message.id();
-                // println!("Message ID: {}", message_id);
-
-                // if let Some(sender) = message.sender() {
-                //     let msg_sender_id = sender.id();
-                //     let msg_sender_name = sender.name();
-                //     let msg_sender_username = sender.username();
-
-                //     println!(
-                //         "Sender: name={:?}, id={}, username={:?}",
-                //         msg_sender_name, msg_sender_id, msg_sender_username
-                //     );
-
-                //     println!("Sender (via message.sender()): id={}", msg_sender_id);
-                // } else {
-                //     println!("Message has NO sender");
-                // }
-
-                println!("Peer ID: {:?}", peer_id);
 
                 tokio::spawn(publisher::broadcast(
                     event_bus.clone(),

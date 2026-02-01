@@ -11,6 +11,14 @@ pub enum DialogType {
     Channel = 2,
 }
 
+#[derive(Debug)]
+pub struct DialogData {
+    pub name: String,
+    pub username: Option<String>,
+    pub kind: DialogType,
+}
+
+
 pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     match dialog.peer {
         Peer::User(_) => DialogType::User,
@@ -96,6 +104,47 @@ pub fn print_peer_data(peer: &Peer) {
                 channel.bare_id(),
                 channel.title()
             );
+        }
+    }
+}
+
+
+pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
+    match peer {
+        Peer::User(user) => {
+            let id = user.bare_id();
+
+            let data = DialogData {
+                name: user.first_name().unwrap_or("Unnamed user").to_string(),
+                username: user.username().map(|u| u.to_string()),
+                kind: DialogType::User,
+            };
+
+            (id, data)
+        }
+
+        Peer::Group(group) => {
+            let id = group.id().bare_id();
+
+            let data = DialogData {
+                name: group.title().unwrap_or("Unnamed group").to_string(),
+                username: None,
+                kind: DialogType::Group,
+            };
+
+            (id, data)
+        }
+
+        Peer::Channel(channel) => {
+            let id = channel.bare_id();
+
+            let data = DialogData {
+                name: channel.title().to_string(),
+                username: channel.username().map(|u| u.to_string()),
+                kind: DialogType::Channel,
+            };
+
+            (id, data)
         }
     }
 }
