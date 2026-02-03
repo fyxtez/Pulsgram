@@ -15,6 +15,7 @@ pub async fn run(
     users_group_peer: Peer,
     targeted_users: Vec<DialogData>,
     targeted_group_users: Vec<i64>,
+    targeted_channels:Vec<i64>
 ) {
     let mut rx = bus.subscribe();
 
@@ -51,12 +52,16 @@ pub async fn run(
 
         //TODO: handle form twitter bot
 
+        //TODO: Pretty ugly in a while loop. 
+        //These should be mostly Arc which come from state, so theres no deep copying just ref count increase.
         let kind = &dialog_data.kind;
         let client = client.clone();
         let errors_peer = errors_peer.clone();
         let targeted_users = targeted_users.clone();
         let targeted_group_users = targeted_group_users.clone();
         let users_group_peer = users_group_peer.clone();
+        let targeted_channels = targeted_channels.clone();
+
 
         match kind {
             telegram::dialogs::DialogType::User => {
@@ -71,7 +76,7 @@ pub async fn run(
             }
             telegram::dialogs::DialogType::Channel => {
                 tokio::spawn(async move {
-                    channel::handle(client, &message, errors_peer).await;
+                    channel::handle(client, &message, errors_peer,targeted_channels,users_group_peer).await;
                 });
             }
         }
