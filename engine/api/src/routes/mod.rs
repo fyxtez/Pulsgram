@@ -1,15 +1,20 @@
 mod ping;
-use std::sync::Arc;
 use axum::{
-    Extension, Router, body::Body, http::{Request, StatusCode}, response::IntoResponse, routing::get
+    Extension, Router,
+    body::Body,
+    http::{Request, StatusCode},
+    response::IntoResponse,
+    routing::get,
 };
+use std::sync::Arc;
 
 use crate::routes::ping::ping;
 
-pub fn create(app_state:Arc<app_state::AppState>) -> Router {
-    let router = Router::new().nest("/api/v1", routes()).layer(Extension(app_state)).fallback(fallback);
-
-    router
+pub fn create(app_state: Arc<app_state::AppState>) -> Router {
+    Router::new()
+        .nest("/api/v1", routes())
+        .layer(Extension(app_state))
+        .fallback(fallback)
 }
 
 fn routes() -> Router {
@@ -17,8 +22,7 @@ fn routes() -> Router {
 }
 
 fn _routes() -> Router {
-    let router = Router::new().route("/ping", get(ping));
-    router
+    Router::new().route("/ping", get(ping))
 }
 
 pub async fn fallback(req: Request<Body>) -> impl IntoResponse {

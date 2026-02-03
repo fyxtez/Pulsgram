@@ -1,9 +1,10 @@
 mod channel;
 mod groups;
+mod keywords;
 mod user;
 
 use std::sync::Arc;
-use telegram::client::report_error;
+use telegram::{client::report_error, dialogs::DialogData};
 use telegram_types::{Client, Peer};
 
 pub async fn run(
@@ -11,6 +12,9 @@ pub async fn run(
     bus: Arc<publisher::EventBus>,
     dialogs_data: Arc<dashmap::DashMap<i64, telegram::dialogs::DialogData>>,
     errors_peer: Peer,
+    users_group_peer: Peer,
+    targeted_users: Vec<DialogData>,
+    targeted_group_users: Vec<i64>,
 ) {
     let mut rx = bus.subscribe();
 
@@ -23,12 +27,15 @@ pub async fn run(
 
         if message_text.is_empty() {
             message_text = "<non-text message (sticker or img)>\n Sent by: xxxxxxxxxx".to_string();
+
+            continue;
         }
 
         let msg_peer_id = message.peer_id().bare_id();
 
         let dialog_data = dialogs_data.get(&msg_peer_id);
 
+        // Uknown dialog sent a message.
         if dialog_data.is_none() {
             let client = client.clone();
             let errors_peer = errors_peer.clone();
@@ -47,16 +54,19 @@ pub async fn run(
         let kind = &dialog_data.kind;
         let client = client.clone();
         let errors_peer = errors_peer.clone();
+        let targeted_users = targeted_users.clone();
+        let targeted_group_users = targeted_group_users.clone();
+        let users_group_peer = users_group_peer.clone();
 
         match kind {
             telegram::dialogs::DialogType::User => {
                 tokio::spawn(async move {
-                    user::handle().await;
+                    user::handle(client, &message, targeted_users, users_group_peer).await;
                 });
             }
             telegram::dialogs::DialogType::Group => {
                 tokio::spawn(async move {
-                    groups::handle(&message).await;
+                    groups::handle(client, &message, targeted_group_users, users_group_peer).await;
                 });
             }
             telegram::dialogs::DialogType::Channel => {

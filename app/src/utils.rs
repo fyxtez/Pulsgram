@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
 use dashmap::DashMap;
 use serde::Serialize;
 use std::{collections::HashMap, fs::File, io::BufWriter, path::Path};
-use telegram::dialogs::get_peer_by_bare_id;
-use telegram_types::{Client, Peer};
 
+#[allow(dead_code)]
 pub fn dump_dialogs_to_json<K, V, P>(
     dialogs: &DashMap<K, V>,
     path: P,

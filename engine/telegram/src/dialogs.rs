@@ -21,6 +21,7 @@ pub struct DialogData {
     pub name: String,
     pub username: Option<String>,
     pub kind: DialogType,
+    pub bare_id: i64,
 }
 
 pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
@@ -31,7 +32,19 @@ pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     }
 }
 
-pub async fn get_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {
+pub fn find_dialog_data_by_bare_id(
+    dialogs: &[DialogData],
+    target_bare_id: i64,
+) -> Option<&DialogData> {
+     for dialog_data in dialogs {
+        if dialog_data.bare_id.eq(&target_bare_id) {
+            return Some(dialog_data);
+        }
+    }
+    None
+}
+
+pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {
     let mut iter_dialogs = client.iter_dialogs();
 
     let dialogs_len = iter_dialogs.total().await.unwrap_or(0);
@@ -100,7 +113,6 @@ pub async fn get_peers_by_bare_ids(
     Ok(found)
 }
 
-
 pub async fn get_peer(
     client: &Arc<Client>,
     bare_id: i64,
@@ -162,6 +174,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
                 name: user.first_name().unwrap_or("Unnamed user").to_string(),
                 username: user.username().map(|u| u.to_string()),
                 kind: DialogType::User,
+                bare_id: id,
             };
 
             (id, data)
@@ -174,6 +187,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
                 name: group.title().unwrap_or("Unnamed group").to_string(),
                 username: None,
                 kind: DialogType::Group,
+                bare_id: id,
             };
 
             (id, data)
@@ -186,6 +200,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
                 name: channel.title().to_string(),
                 username: channel.username().map(|u| u.to_string()),
                 kind: DialogType::Channel,
+                bare_id: id,
             };
 
             (id, data)
@@ -193,9 +208,8 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     }
 }
 
-
-pub fn normalize_dialogs_into_data(dialogs:Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
-    let dialogs_data: Arc<dashmap::DashMap<i64,DialogData>> = Arc::new(dashmap::DashMap::new());
+pub fn normalize_dialogs_into_data(dialogs: Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
+    let dialogs_data: Arc<dashmap::DashMap<i64, DialogData>> = Arc::new(dashmap::DashMap::new());
 
     for dialog in dialogs {
         let peer = dialog.peer();

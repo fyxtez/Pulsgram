@@ -1,25 +1,38 @@
-use telegram_types::Message;
+use std::sync::Arc;
 
-pub async fn handle(message: &Message) {
-    //TODO: Sometimes this might not work
-    let sender = match message.sender() {
-        Some(s) => s,
+use telegram_types::{Client, Message, Peer};
+
+pub async fn handle(
+    client: Arc<Client>,
+    message: &Message,
+    targeted_group_users_bare_ids: Vec<i64>,
+    users_peer: Peer,
+) {
+    let message_text = message.text();
+    let msg_sender = message.sender();
+
+    let message_sender_bare_id = match msg_sender {
+        Some(sender) => sender.id().bare_id(),
         None => {
-            dbg!("NO_MESSAGE_SENDER");
+            println!(
+                "Something went wrong with the message sender. \nMessage text: {}\n PeerID: {} \n PeerBareID: {}",
+                message_text,
+                message.peer_id(),
+                message.peer_id().bare_id()
+            );
             return;
         }
     };
 
-    let name = sender.name().unwrap_or("NO_NAME").to_string();
-
-    let _username = sender.username().unwrap_or("NO_USERNAME").to_string();
-
-    if name.contains("Rick") || name.contains("Phanes") {
+    if !targeted_group_users_bare_ids.contains(&message_sender_bare_id) {
         return;
     }
 
-    println!(
-        "{}",
-        format!("Group msg from: {} said: \n {}", name, message.text())
-    );
+    let _ = client
+        .send_message(
+            users_peer,
+            //TODO
+            format!("{}\n---------\n{}", message_text, "SOMEONE IMPORTANT."),
+        )
+        .await;
 }
