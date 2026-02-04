@@ -6,9 +6,7 @@ use dotenv::dotenv;
 use std::{collections::HashSet, sync::Arc, vec};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{
-        DialogData, get_peer, load_dialogs, normalize_dialogs_into_data,
-    },
+    dialogs::{DialogData, get_peer, load_dialogs, normalize_dialogs_into_data},
 };
 use telegram_types::Peer;
 
@@ -93,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let targeted_users: Vec<DialogData> = vec![chartuman_dialog_data];
     let targeted_group_users: Vec<i64> = vec![r_bare_id, 7690346837];
-    let targeted_channels:Vec<i64> = vec![3858893733];
+    let targeted_channels: Vec<i64> = vec![3858893733];
 
     //TODO: Many of these arguments should go trough state.
     tokio::spawn(analysis::run(
@@ -104,7 +102,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         users_group_peer,
         targeted_users,
         targeted_group_users,
-        targeted_channels
+        targeted_channels,
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();

@@ -1,9 +1,15 @@
 use std::sync::Arc;
 
-use telegram::{client::report_error};
+use telegram::client::report_error;
 use telegram_types::{Client, Message, Peer};
 
-pub async fn handle(client: Arc<Client>, message: &Message, errors_peer: Peer,targeted_channels:Vec<i64>,users_peer:Peer) {
+pub async fn handle(
+    client: Arc<Client>,
+    message: &Message,
+    errors_peer: Peer,
+    targeted_channels: Vec<i64>,
+    users_peer: Peer,
+) {
     let peer = message.peer();
     let message_text = message.text();
     let message_peer_bare_id = message.peer_id().bare_id();
@@ -27,13 +33,17 @@ pub async fn handle(client: Arc<Client>, message: &Message, errors_peer: Peer,ta
     let send_message_result = client
         .send_message(
             users_peer,
-            format!("{}\n---------\n{}", message_text, message.peer().unwrap().name().unwrap_or("Unnamed Channel")),
+            format!(
+                "{}\n---------\n{}",
+                message_text,
+                message.peer().unwrap().name().unwrap_or("Unnamed Channel")
+            ),
         )
         .await;
 
     //TODO: Report error
-    if send_message_result.is_err(){
+    if send_message_result.is_err() {
         println!("-------");
-        println!("{:?}",send_message_result.err());
+        println!("{:?}", send_message_result.err());
     }
 }

@@ -5,10 +5,16 @@ use std::{
 };
 
 use crate::config::load_tg_client_config;
-use grammers_client::{SignInError, UpdatesConfiguration};
+use grammers_client::{
+    InvocationError, SignInError, UpdatesConfiguration,
+    grammers_tl_types::{
+        self,
+        enums::{InputNotifyPeer, InputPeer},
+    },
+};
 use grammers_client::{Update, types::Peer};
 use grammers_mtsender::SenderPool;
-use grammers_session::{storages::SqliteSession, updates::UpdatesLike};
+use grammers_session::{defs::PeerRef, storages::SqliteSession, updates::UpdatesLike};
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use grammers_client::Client;
@@ -104,4 +110,42 @@ pub fn report_error(client: Arc<Client>, errors_peer: Peer, message: String) {
             eprintln!("Failed to send error message: {e}");
         }
     });
+}
+
+pub async fn toggle_mute_peer(
+    client: Arc<Client>,
+    peer: &Peer,
+    mute: bool,
+) -> Result<(), InvocationError> {
+    let peer_ref = PeerRef::from(peer);
+    let input_peer: InputPeer = peer_ref.into();
+
+    let notify_peer =
+        InputNotifyPeer::Peer(grammers_tl_types::types::InputNotifyPeer { peer: input_peer });
+
+    let mute_until = match mute {
+        true => Some(i32::MAX),
+        false => Some(i32::MIN),
+    };
+    let ipns = grammers_tl_types::types::InputPeerNotifySettings {
+        show_previews: Some(false),
+        silent: Some(false),
+        mute_until,
+        sound: None,
+        stories_muted: Some(false),
+        stories_hide_sender: Some(false),
+        stories_sound: Default::default(),
+    };
+
+    let settings = grammers_tl_types::enums::InputPeerNotifySettings::Settings(ipns);
+
+    let _x = client
+        .invoke(
+            &grammers_tl_types::functions::account::UpdateNotifySettings {
+                peer: notify_peer,
+                settings,
+            },
+        )
+        .await?;
+    Ok(())
 }

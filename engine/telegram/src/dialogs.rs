@@ -32,11 +32,12 @@ pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     }
 }
 
+//TODO: Use built in find using iter.
 pub fn find_dialog_data_by_bare_id(
     dialogs: &[DialogData],
     target_bare_id: i64,
 ) -> Option<&DialogData> {
-     for dialog_data in dialogs {
+    for dialog_data in dialogs {
         if dialog_data.bare_id.eq(&target_bare_id) {
             return Some(dialog_data);
         }
