@@ -181,7 +181,6 @@ pub fn print_peer_data(peer: &Peer) {
     }
 }
 
-
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     let peer_name = peer.name().unwrap_or("Unnamed");
     match peer {
@@ -200,7 +199,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
 
         Peer::Group(group) => {
             let id = group.id().bare_id();
-             
+
             if peer_name.eq("Trenches Bunker Messages") {
                 dbg!("1111");
             }

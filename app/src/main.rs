@@ -59,7 +59,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get(&3839014502)
         .ok_or("Could not find kol_follows")?;
 
-    let lc_signals = peers_map.get(&5017001940).ok_or("Could not find kol_follows")?;
+    let lc_signals = peers_map
+        .get(&5017001940)
+        .ok_or("Could not find kol_follows")?;
 
     println!("Peers fetched.");
 
@@ -98,11 +100,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let kol_follows = kol_follows.clone();
     let lc_signals = lc_signals.clone();
-    
+
     tokio::spawn(lc_signals::run(
         Arc::clone(&bus),
         Arc::clone(&client),
-        
         8084912410,
         lc_signals,
     ));

@@ -32,7 +32,9 @@ pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, target_id: i64, signal
 
         let _symbol = result.symbol;
 
-        let result = client.send_message(&signals, remove_emojis(message.text())).await;
+        let result = client
+            .send_message(&signals, remove_emojis(message.text()))
+            .await;
 
         if result.is_err() {
             dbg!(result.err());
