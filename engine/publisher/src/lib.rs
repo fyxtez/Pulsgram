@@ -7,7 +7,7 @@ use tokio::sync::broadcast;
 
 use crate::types::{EventTag, TgEvent};
 
-pub async fn broadcast(bus: Arc<broadcast::Sender<TgEvent>>, message: Message, tag: EventTag) {
+pub fn broadcast(bus: Arc<broadcast::Sender<TgEvent>>, message: Message, tag: EventTag) {
     let event = TgEvent { message, tag };
 
     let _ = bus.send(event);

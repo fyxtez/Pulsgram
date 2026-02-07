@@ -91,11 +91,11 @@ pub async fn handle_updates(
             Update::NewMessage(message) if !message.outgoing() => {
                 // TODO: Probably handle sniper here too.
 
-                tokio::spawn(publisher::broadcast(
+                publisher::broadcast(
                     event_bus.clone(),
                     message,
                     publisher::types::EventTag::Other,
-                ));
+                );
             }
             _ => {
                 // println!("Other update: {:?}", update);

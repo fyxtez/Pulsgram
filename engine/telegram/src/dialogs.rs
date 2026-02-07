@@ -83,6 +83,21 @@ pub async fn get_peer_by_bare_id(
     Ok(None)
 }
 
+pub fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, Peer> {
+    let mut map = HashMap::new();
+
+    for dialog in dialogs {
+        let bare_id = match &dialog.peer {
+            Peer::User(user) => user.bare_id(),
+            Peer::Group(group) => group.id().bare_id(),
+            Peer::Channel(channel) => channel.bare_id(),
+        };
+        map.insert(bare_id, dialog.peer.clone());
+    }
+
+    map
+}
+
 pub async fn get_peers_by_bare_ids(
     client: &Client,
     bare_ids: Vec<i64>,
@@ -166,7 +181,9 @@ pub fn print_peer_data(peer: &Peer) {
     }
 }
 
+
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
+    let peer_name = peer.name().unwrap_or("Unnamed");
     match peer {
         Peer::User(user) => {
             let id = user.bare_id();
@@ -183,6 +200,10 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
 
         Peer::Group(group) => {
             let id = group.id().bare_id();
+             
+            if peer_name.eq("Trenches Bunker Messages") {
+                dbg!("1111");
+            }
 
             let data = DialogData {
                 name: group.title().unwrap_or("Unnamed group").to_string(),

@@ -29,17 +29,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "analysis"
-version = "0.1.0"
-dependencies = [
- "dashmap",
- "publisher",
- "telegram",
- "telegram_types",
- "tokio",
-]
-
-[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,12 +53,12 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
- "analysis",
  "api",
  "app_state",
  "dashmap",
  "dotenv",
  "forwarder",
+ "lc_signals",
  "publisher",
  "serde",
  "serde_json",
@@ -788,6 +777,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy_static"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "lc_signals"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "publisher",
+ "regex",
+ "telegram_types",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.180"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1211,9 +1216,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.12.2"
+version = "1.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843bc0191f75f3e22651ae5f1e72939ab2f72a4bc30fa80a066bd66edefc24d4"
+checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
 dependencies = [
  "aho-corasick",
  "memchr",

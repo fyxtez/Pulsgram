@@ -3,10 +3,10 @@ mod utils;
 use api::start_api_server;
 // use db::{connect, run_migrations};
 use dotenv::dotenv;
-use std::{collections::HashSet, sync::Arc, vec};
+use std::{collections::HashSet, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{DialogData, get_peer, load_dialogs, normalize_dialogs_into_data},
+    dialogs::{build_peers_map_from_dialogs, get_peer, load_dialogs, normalize_dialogs_into_data},
 };
 use telegram_types::Peer;
 
@@ -37,21 +37,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let dialogs = load_dialogs(&client).await?;
 
-    //TODO: this should be in a client!!!
+    // println!("Telegram dialogs loaded.");
+    let peers_map = build_peers_map_from_dialogs(&dialogs);
+    // let from_peer = peers_map
+    //     .get(&1649642332)
+    //     .ok_or("Could not find from_peer")?;
+    // let to_peer = peers_map.get(&5173657056).ok_or("Could not find to_peer")?;
+    // let tokens_peer = peers_map
+    //     .get(&5144995821)
+    //     .ok_or("Could not find tokens_peer")?;
+    // let errors_peer = peers_map
+    //     .get(&3876244916)
+    //     .ok_or("Could not find errors_peer")?;
+    // let chartuman = peers_map
+    //     .get(&7690346837)
+    //     .ok_or("Could not find chartunan")?;
+    // let users_group_peer = peers_map
+    //     .get(&3692507348)
+    //     .ok_or("Could not find users_group_peer")?;
+    let kol_follows = peers_map
+        .get(&3839014502)
+        .ok_or("Could not find kol_follows")?;
 
-    println!("Telegram dialogs loaded.");
-
-    // TODO: Use function get_peers_by_bare_ids if you leaving it like this, and have endpoint to create them and save in DB.
-    let _from_peer = get_peer(&client, 1649642332).await?;
-    let _to_peer = get_peer(&client, 5173657056).await?;
-    let _tokens_peer = get_peer(&client, 5144995821).await?;
-    let errors_peer = get_peer(&client, 3876244916).await?;
-    let _chartunan = get_peer(&client, 7690346837).await?;
-    let users_group_peer = get_peer(&client, 3692507348).await?;
+    let lc_signals = peers_map.get(&5017001940).ok_or("Could not find kol_follows")?;
 
     println!("Peers fetched.");
 
-    // TODO
     let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
     let _ignored_peers: HashSet<&Peer> = HashSet::new();
@@ -85,31 +96,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     _ignored_peers,
     // ));
 
-    let chartuman_dialog_data = shared_state.dialogs_data.get(&7690346837).unwrap().clone();
-
-    let r_bare_id = 6314293988;
-
-    let targeted_users: Vec<DialogData> = vec![chartuman_dialog_data];
-    let targeted_group_users: Vec<i64> = vec![r_bare_id, 7690346837];
-    let targeted_channels: Vec<i64> = vec![3858893733];
-
-    //TODO: Many of these arguments should go trough state.
-    tokio::spawn(analysis::run(
-        Arc::clone(&client),
+    let kol_follows = kol_follows.clone();
+    let lc_signals = lc_signals.clone();
+    
+    tokio::spawn(lc_signals::run(
         Arc::clone(&bus),
-        shared_state.dialogs_data.clone(),
-        errors_peer.clone(),
-        users_group_peer,
-        targeted_users,
-        targeted_group_users,
-        targeted_channels,
+        Arc::clone(&client),
+        
+        8084912410,
+        lc_signals,
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
 
     // run_migrations("../migrations", db);
 
-    start_api_server("127.0.0.1", 8181, shared_state).await;
+    // start_api_server("127.0.0.1", 8181, shared_state).await;
 
     tokio::signal::ctrl_c().await?;
 
