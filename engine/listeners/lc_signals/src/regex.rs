@@ -30,13 +30,10 @@ fn regexes() -> &'static SignalRegexes {
         disclaimer: Regex::new(r"(?i)disclaimer:.*").unwrap(),
     })
 }
-static EMOJI_REGEX: OnceLock<Regex> = OnceLock::new();
 
-pub fn remove_emojis(s: &str) -> String {
-    let re = EMOJI_REGEX
-        .get_or_init(|| Regex::new(r"[\p{Emoji_Presentation}\p{Emoji}\u{200d}\u{fe0f}]").unwrap());
-
-    re.replace_all(s, "").to_string()
+pub fn remove_emojis(input: &str) -> String {
+    let re = Regex::new(r"[\p{Emoji_Presentation}\p{Extended_Pictographic}]").unwrap();
+    re.replace_all(input, "").to_string()
 }
 
 fn is_valid_trading_signal(text: &str) -> bool {

@@ -8,3 +8,4 @@ lazy_static = "1.5.0"
 publisher = { path = "../../publisher" }
 regex = "1.12.3"
 telegram_types = { path = "../../telegram_types" }
+unicode-segmentation = "1.12.0"
