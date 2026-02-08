@@ -34,6 +34,14 @@ pub async fn run(
         dbg!(&message_text);
         dbg!(&message_type);
 
-        handle_follow(&message_type, message, &client, &targeted_kols,&destination,&source).await;
+        handle_follow(
+            &message_type,
+            message,
+            &client,
+            &targeted_kols,
+            &destination,
+            &source,
+        )
+        .await;
     }
 }

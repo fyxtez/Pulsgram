@@ -1,5 +1,5 @@
-mod utils;
 mod constants;
+mod utils;
 
 use api::start_api_server;
 // use db::{connect, run_migrations};
@@ -110,7 +110,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         8084912410,
         lc_signals,
     ));
-
 
     tokio::spawn(kol_follows::run(
         Arc::clone(&bus),
