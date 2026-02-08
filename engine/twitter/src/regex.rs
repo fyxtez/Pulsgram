@@ -27,6 +27,10 @@ pub enum MessageType {
         followee: String,
         profile_info: String,
     },
+    ProfileUpdate {
+        user: String,
+        update_info: String,
+    },
     Unknown,
 }
 
@@ -61,6 +65,12 @@ pub fn follow_regex() -> &'static Regex {
     })
 }
 
+static PROFILE_UPDATE_REGEX: OnceLock<Regex> = OnceLock::new();
+pub fn profile_update_regex() -> &'static Regex {
+    PROFILE_UPDATE_REGEX
+        .get_or_init(|| Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)").unwrap())
+}
+
 pub fn parse_message(message: &str) -> Option<(String, String, String, Option<String>)> {
     if let Some(caps) = tweet_regex().captures(message) {
         return Some((
@@ -88,7 +98,6 @@ pub fn parse_message(message: &str) -> Option<(String, String, String, Option<St
             Some(caps[2].to_string()),
         ));
     }
-
     None
 }
 
@@ -98,6 +107,13 @@ pub fn parse_message_type(message: &str) -> MessageType {
             follower: caps[1].to_string(),
             followee: caps[2].to_string(),
             profile_info: caps[3].to_string(),
+        };
+    }
+
+    if let Some(caps) = profile_update_regex().captures(message) {
+        return MessageType::ProfileUpdate {
+            user: caps[1].to_string(),
+            update_info: caps[2].to_string(),
         };
     }
 

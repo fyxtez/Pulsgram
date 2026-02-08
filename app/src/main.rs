@@ -67,9 +67,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Peers fetched.");
 
-    let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
+    // let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
-    let _ignored_peers: HashSet<&Peer> = HashSet::new();
+    // let _ignored_peers: HashSet<&Peer> = HashSet::new();
 
     let dialogs_data = normalize_dialogs_into_data(dialogs);
 
@@ -114,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(kol_follows::run(
         Arc::clone(&bus),
         Arc::clone(&client),
-        7910357312, //fyxtez t. bot
+        7910357312,
         targeted_kols,
         kol_follows,
         fyxtez,

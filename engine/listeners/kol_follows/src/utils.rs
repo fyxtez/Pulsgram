@@ -15,9 +15,12 @@ pub async fn handle_follow(
         profile_info,
     } = message_type
     {
+        // len = 0 <- track everyone
+        // if targeted_kols.len().eq(&0) || targeted_kols.contains(follower){
         let _ = client
             .forward_messages(destination, &[full_message.id()], source)
             .await;
+        // }
     } else {
     }
 }
