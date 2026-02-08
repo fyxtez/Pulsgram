@@ -10,6 +10,7 @@ tokio = { version = "1.49.0", features = ["full"] }
 telegram = { path = "../engine/telegram" }
 telegram_types = { path = "../engine/telegram_types" }
 publisher = { path = "../engine/publisher" }
+kol_follows = { path = "../engine/listeners/kol_follows" }
 forwarder = { path = "../engine/listeners/forwarder" }
 lc_signals = { path = "../engine/listeners/lc_signals" }
 token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }

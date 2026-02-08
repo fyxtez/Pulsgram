@@ -57,6 +57,7 @@ jobs:
 
   build-release:
     name: Build Release
+    if: false
     runs-on: ubuntu-latest
     needs: [check, test, fmt, clippy]
     steps:

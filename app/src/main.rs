@@ -1,4 +1,5 @@
 mod utils;
+mod constants;
 
 use api::start_api_server;
 // use db::{connect, run_migrations};
@@ -37,8 +38,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let dialogs = load_dialogs(&client).await?;
 
-    // println!("Telegram dialogs loaded.");
+    println!("Telegram dialogs loaded.");
     let peers_map = build_peers_map_from_dialogs(&dialogs);
+    println!("Peers map l.");
+
     // let from_peer = peers_map
     //     .get(&1649642332)
     //     .ok_or("Could not find from_peer")?;
@@ -49,9 +52,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let errors_peer = peers_map
     //     .get(&3876244916)
     //     .ok_or("Could not find errors_peer")?;
-    // let chartuman = peers_map
-    //     .get(&7690346837)
-    //     .ok_or("Could not find chartunan")?;
     // let users_group_peer = peers_map
     //     .get(&3692507348)
     //     .ok_or("Could not find users_group_peer")?;
@@ -62,6 +62,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let lc_signals = peers_map
         .get(&5017001940)
         .ok_or("Could not find kol_follows")?;
+
+    let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
     println!("Peers fetched.");
 
@@ -100,12 +102,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let kol_follows = kol_follows.clone();
     let lc_signals = lc_signals.clone();
+    let targeted_kols: Vec<String> = vec![];
 
     tokio::spawn(lc_signals::run(
         Arc::clone(&bus),
         Arc::clone(&client),
         8084912410,
         lc_signals,
+    ));
+
+
+    tokio::spawn(kol_follows::run(
+        Arc::clone(&bus),
+        Arc::clone(&client),
+        7910357312, //fyxtez t. bot
+        targeted_kols,
+        kol_follows,
+        fyxtez,
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();

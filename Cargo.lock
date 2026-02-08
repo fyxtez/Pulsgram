@@ -58,6 +58,7 @@ dependencies = [
  "dashmap",
  "dotenv",
  "forwarder",
+ "kol_follows",
  "lc_signals",
  "publisher",
  "serde",
@@ -774,6 +775,16 @@ checksum = "8c942ebf8e95485ca0d52d97da7c5a2c387d0e7f0ba4c35e93bfcaee045955b3"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "kol_follows"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "publisher",
+ "telegram_types",
+ "twitter",
 ]
 
 [[package]]
@@ -1541,6 +1552,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "twitter"
+version = "0.1.0"
+dependencies = [
+ "regex",
 ]
 
 [[package]]
