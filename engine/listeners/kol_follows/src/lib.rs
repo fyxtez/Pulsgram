@@ -1,19 +1,14 @@
 mod utils;
 use publisher::EventBus;
 use std::sync::Arc;
-use telegram_types::{Client, Peer};
-use twitter::regex::parse_message_type;
-
-use crate::utils::handle_follow;
+use telegram_types::{Client, Message, Peer};
 
 // TODO: Ignored senders implementation
 pub async fn run(
     bus: Arc<EventBus>,
-    client: Arc<Client>,
     target_dialog_id: i64,
-    targeted_kols: Vec<String>,
     destination: Peer,
-    source: Peer,
+    dispatcher: Arc<Client>,
 ) {
     println!("KOL Follows running...");
     let mut rx = bus.subscribe();
@@ -27,21 +22,33 @@ pub async fn run(
             continue;
         }
 
-        let message_text = message.text();
-
-        let message_type = parse_message_type(message_text);
-
-        dbg!(&message_text);
-        dbg!(&message_type);
-
         handle_follow(
-            &message_type,
             message,
-            &client,
-            &targeted_kols,
+            &dispatcher,
             &destination,
-            &source,
         )
         .await;
     }
+}
+
+pub async fn handle_follow(
+    full_message: Message,
+    dispatcher: &Client,
+    destination: &Peer,
+) {
+    let html_content = remove_emojis(&full_message.html_text());
+    let input_message = telegram_types::InputMessage::new().html(html_content);
+
+    match dispatcher.send_message(destination, input_message).await {
+        Ok(_) => {}
+        Err(err) => {
+            eprintln!("Failed to send message: {:?}", err);
+        }
+    }
+}
+
+fn remove_emojis(s: &str) -> String {
+    s.chars()
+        .filter(|c| c.is_ascii() || (*c as u32) < 0x1F000)
+        .collect()
 }

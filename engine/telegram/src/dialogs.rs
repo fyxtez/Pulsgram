@@ -233,7 +233,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     }
 }
 
-pub fn normalize_dialogs_into_data(dialogs: Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
+pub fn normalize_dialogs_into_data(dialogs: &Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
     let dialogs_data: Arc<dashmap::DashMap<i64, DialogData>> = Arc::new(dashmap::DashMap::new());
 
     for dialog in dialogs {
