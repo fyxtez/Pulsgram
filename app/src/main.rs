@@ -4,7 +4,7 @@ mod utils;
 use api::start_api_server;
 // use db::{connect, run_migrations};
 use dotenv::dotenv;
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{build_peers_map_from_dialogs, get_peer, load_dialogs, normalize_dialogs_into_data},
@@ -15,14 +15,15 @@ use telegram_types::Peer;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let session_path = "plusgram.session";
-
     let ConnectClientReturnType {
         client,
         updates_receiver,
-    } = connect_client(session_path).await?;
+    } = connect_client("plusgram.session","API_ID","API_HASH","PHONE_NUMBER","PASSWORD").await?;
 
-    println!("Telegram Client connected.");
+    let ConnectClientReturnType {
+        client: dispatcher_client,
+        updates_receiver: _,
+    } = connect_client("dispatcher.plusgram.session","API_ID","API_HASH","PHONE_NUMBER_DISPATCHER","PASSWORD_DISPATCHER").await?;
 
     let client = Arc::new(client);
 
@@ -34,13 +35,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&bus),
     ));
 
-    println!("Updates handler spawned.");
-
     let dialogs = load_dialogs(&client).await?;
 
-    println!("Telegram dialogs loaded.");
     let peers_map = build_peers_map_from_dialogs(&dialogs);
-    println!("Peers map l.");
 
     // let from_peer = peers_map
     //     .get(&1649642332)
@@ -73,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let dialogs_data = normalize_dialogs_into_data(dialogs);
 
-    dbg!(&dialogs_data);
+    // dbg!(&dialogs_data);
 
     println!("Dialogs normalized");
 

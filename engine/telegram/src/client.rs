@@ -31,8 +31,14 @@ fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, Box
     Ok(sender_pool)
 }
 
-pub async fn connect_client(session_path: &str) -> Result<ConnectClientReturnType, Box<dyn Error>> {
-    let config = load_tg_client_config()?;
+pub async fn connect_client(
+    session_path: &str,
+    api_id_var: &str,
+    api_hash_var: &str,
+    phone_number_var: &str,
+    password_var: &str,
+) -> Result<ConnectClientReturnType, Box<dyn Error>> {
+    let config = load_tg_client_config(api_id_var, api_hash_var, phone_number_var, password_var)?;
 
     let sender_pool = create_sender_pool(session_path, config.api_id)?;
 
@@ -83,6 +89,9 @@ pub async fn handle_updates(
             ..Default::default()
         },
     );
+
+    println!("Updates handler spawned.");
+
 
     loop {
         let update = updates.next().await;

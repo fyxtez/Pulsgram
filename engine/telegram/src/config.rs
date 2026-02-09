@@ -9,15 +9,19 @@ pub struct ConfigData {
     pub password: String,
 }
 
-pub fn load_tg_client_config() -> Result<ConfigData, Box<dyn Error>> {
-    let api_id_str = env::var("API_ID").map_err(|_| "Missing environment variable: API_ID")?;
+pub fn load_tg_client_config(
+    api_id: &str,
+    api_hash: &str,
+    phone_number: &str,
+    password: &str,
+) -> Result<ConfigData, Box<dyn Error>> {
+    let api_id_str = env::var(api_id).map_err(|_| format!("Missing env var: {}", api_id))?;
     let api_id = api_id_str
-        .parse()
-        .map_err(|_| "Failed to parse API_ID as i32")?;
-    let api_hash = env::var("API_HASH").map_err(|_| "Missing environment variable: API_HASH")?;
-    let phone_number =
-        env::var("PHONE_NUMBER").map_err(|_| "Missing environment variable: PHONE_NUMBER")?;
-    let password = env::var("PASSWORD").map_err(|_| "Missing environment variable: PASSWORD")?;
+        .parse::<i32>()
+        .map_err(|_| format!("Failed to parse {} as i32", api_id))?;
+    let api_hash = env::var(api_hash).map_err(|_| format!("Missing env var: {}", api_hash))?;
+    let phone_number = env::var(phone_number).map_err(|_| format!("Missing env var: {}", phone_number))?;
+    let password = env::var(password).map_err(|_| format!("Missing env var: {}", password))?;
 
     Ok(ConfigData {
         api_id,

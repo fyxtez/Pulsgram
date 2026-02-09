@@ -59,6 +59,8 @@ pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationErro
         }
     }
 
+    println!("Telegram dialogs loaded.");
+
     Ok(dialogs)
 }
 
@@ -94,6 +96,8 @@ pub fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, Peer> {
         };
         map.insert(bare_id, dialog.peer.clone());
     }
+
+    println!("Peers map loaded.");
 
     map
 }
