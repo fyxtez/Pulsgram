@@ -6,9 +6,8 @@ use telegram_types::{Client, Peer};
 
 use crate::regex::{parse_trading_signal, remove_emojis};
 
-// TODO: Ignored senders implementation
 pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, target_id: i64, signals: Peer) {
-    println!("LC Signals running...");
+    println!("Perp Signals running...");
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {

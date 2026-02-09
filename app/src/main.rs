@@ -18,12 +18,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ConnectClientReturnType {
         client,
         updates_receiver,
-    } = connect_client("plusgram.session","API_ID","API_HASH","PHONE_NUMBER","PASSWORD").await?;
+    } = connect_client(
+        "plusgram.session",
+        "API_ID",
+        "API_HASH",
+        "PHONE_NUMBER",
+        "PASSWORD",
+    )
+    .await?;
 
     let ConnectClientReturnType {
         client: dispatcher_client,
         updates_receiver: _,
-    } = connect_client("dispatcher.plusgram.session","API_ID","API_HASH","PHONE_NUMBER_DISPATCHER","PASSWORD_DISPATCHER").await?;
+    } = connect_client(
+        "dispatcher.plusgram.session",
+        "API_ID",
+        "API_HASH",
+        "PHONE_NUMBER_DISPATCHER",
+        "PASSWORD_DISPATCHER",
+    )
+    .await?;
 
     let client = Arc::new(client);
 
@@ -45,9 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
 
-    let dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
-
-    dbg!(dialogs_data_from_dispatcher);
+    let _dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
 
     let peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
 
@@ -70,25 +82,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let perp_signals = peers_map_dispatcher
         .get(&3725788750)
-        .ok_or("Could not find lc_signals")?;
+        .ok_or("Could not find perp_signals")?;
 
     // let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
-
-    println!("Peers fetched.");
 
     // let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
     // let _ignored_peers: HashSet<&Peer> = HashSet::new();
 
-
-
-    println!("Dialogs normalized");
-
     // TODO: Ignore Ph & Ri
 
     // dump_dialogs_to_json(&dialogs_data, "dialogs.json").unwrap();
 
-    let state = app_state::AppState { dialogs_data,client:client.clone(),client_dispatcher:client_dispatcher.clone() };
+    let state = app_state::AppState {
+        dialogs_data,
+        client: client.clone(),
+        client_dispatcher: client_dispatcher.clone(),
+    };
 
     let shared_state = Arc::new(state);
 
@@ -108,13 +118,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ));
 
     let kol_follows = kol_follows.clone();
-    let lc_signals = perp_signals.clone();
+    let perp_signals = perp_signals.clone();
 
-    tokio::spawn(lc_signals::run(
+    tokio::spawn(perp_signals::run(
         Arc::clone(&bus),
         Arc::clone(&client),
         8084912410,
-        lc_signals,
+        perp_signals,
     ));
 
     tokio::spawn(kol_follows::run(

@@ -59,7 +59,7 @@ dependencies = [
  "dotenv",
  "forwarder",
  "kol_follows",
- "lc_signals",
+ "perp_signals",
  "publisher",
  "serde",
  "serde_json",
@@ -815,17 +815,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
-name = "lc_signals"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "publisher",
- "regex",
- "telegram_types",
- "unicode-segmentation",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.180"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1203,6 +1192,17 @@ name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
+
+[[package]]
+name = "perp_signals"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "publisher",
+ "regex",
+ "telegram_types",
+ "unicode-segmentation",
+]
 
 [[package]]
 name = "phf"

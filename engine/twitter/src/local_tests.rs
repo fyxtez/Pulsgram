@@ -38,7 +38,11 @@ $buttcoin"#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "_Shadow36");
                 assert_eq!(user_link, None);
                 assert!(text.contains("50 mothafuckin million"));
@@ -85,7 +89,11 @@ lol fine.  BarkingPuppy is starting to grow on me."#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "HungryPawnsX");
                 assert_eq!(user_link, None);
                 assert!(text.contains("BarkingPuppy is starting to grow on me"));
@@ -149,7 +157,11 @@ Underestimating Inunomics will feed your anti-portfolio."#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "himgajria");
                 assert_eq!(user_link, None);
                 assert!(text.contains("Inunomics"));
@@ -166,7 +178,11 @@ lesson in there"#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "Pumpfun");
                 assert_eq!(user_link, None);
                 assert!(text.contains("trenches bought the bottom"));
@@ -183,7 +199,11 @@ Like piggy if you want a tip for more cookies atleast be nice"#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "OnlyLJC");
                 assert_eq!(user_link, None);
                 assert!(text.contains("Why everytime"));
@@ -218,7 +238,11 @@ there's always going to be good and bad times in markets, there will always be a
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "cryptolyxe");
                 assert_eq!(user_link, None);
                 assert!(text.contains("my honest advice"));
@@ -286,7 +310,11 @@ good morning boob and butt enjoyers"#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "cryptolyxe");
                 assert_eq!(user_link, None);
                 assert_eq!(text, "good morning boob and butt enjoyers");
@@ -342,7 +370,10 @@ lead @regent_cx 🤖 regent.eth | Prev: @bioprotocol @infura_io @makerdao
                 profile_info,
             } => {
                 assert_eq!(follower, "shawmakesmagic");
-                assert_eq!(follower_link, Some("https://x.com/shawmakesmagic".to_string()));
+                assert_eq!(
+                    follower_link,
+                    Some("https://x.com/shawmakesmagic".to_string())
+                );
                 assert_eq!(followee, "seanwbren");
                 assert_eq!(followee_link, Some("https://x.com/seanwbren".to_string()));
                 assert!(profile_info.contains("Sean Brennan"));
@@ -401,7 +432,10 @@ macdonal im dont love it
                 assert_eq!(follower, "pmarca");
                 assert_eq!(follower_link, Some("https://x.com/pmarca".to_string()));
                 assert_eq!(followee, "chiweethedog");
-                assert_eq!(followee_link, Some("https://x.com/chiweethedog".to_string()));
+                assert_eq!(
+                    followee_link,
+                    Some("https://x.com/chiweethedog".to_string())
+                );
                 assert!(profile_info.len() > 0);
             }
             _ => panic!("Expected Follow, got {:?}", result),
@@ -439,7 +473,11 @@ Testing with three images"#;
 
         let result = parse_message_type(message);
         match result {
-            MessageType::Tweet { user, user_link, text } => {
+            MessageType::Tweet {
+                user,
+                user_link,
+                text,
+            } => {
                 assert_eq!(user, "testuser");
                 assert_eq!(user_link, None);
                 assert_eq!(text, "Testing with three images");

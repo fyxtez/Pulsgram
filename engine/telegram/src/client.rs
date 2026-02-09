@@ -92,7 +92,6 @@ pub async fn handle_updates(
 
     println!("Updates handler spawned.");
 
-
     loop {
         let update = updates.next().await;
         let update = update.unwrap(); // TODO: handle error properly

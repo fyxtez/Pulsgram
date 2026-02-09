@@ -22,20 +22,11 @@ pub async fn run(
             continue;
         }
 
-        handle_follow(
-            message,
-            &dispatcher,
-            &destination,
-        )
-        .await;
+        handle_follow(message, &dispatcher, &destination).await;
     }
 }
 
-pub async fn handle_follow(
-    full_message: Message,
-    dispatcher: &Client,
-    destination: &Peer,
-) {
+pub async fn handle_follow(full_message: Message, dispatcher: &Client, destination: &Peer) {
     let html_content = remove_emojis(&full_message.html_text());
     let input_message = telegram_types::InputMessage::new().html(html_content);
 

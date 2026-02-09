@@ -20,7 +20,8 @@ pub fn load_tg_client_config(
         .parse::<i32>()
         .map_err(|_| format!("Failed to parse {} as i32", api_id))?;
     let api_hash = env::var(api_hash).map_err(|_| format!("Missing env var: {}", api_hash))?;
-    let phone_number = env::var(phone_number).map_err(|_| format!("Missing env var: {}", phone_number))?;
+    let phone_number =
+        env::var(phone_number).map_err(|_| format!("Missing env var: {}", phone_number))?;
     let password = env::var(password).map_err(|_| format!("Missing env var: {}", password))?;
 
     Ok(ConfigData {

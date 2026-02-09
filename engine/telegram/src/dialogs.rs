@@ -32,17 +32,11 @@ pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     }
 }
 
-//TODO: Use built in find using iter.
 pub fn find_dialog_data_by_bare_id(
     dialogs: &[DialogData],
     target_bare_id: i64,
 ) -> Option<&DialogData> {
-    for dialog_data in dialogs {
-        if dialog_data.bare_id.eq(&target_bare_id) {
-            return Some(dialog_data);
-        }
-    }
-    None
+    dialogs.iter().find(|dialog_data| dialog_data.bare_id == target_bare_id)
 }
 
 pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {
@@ -233,7 +227,9 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     }
 }
 
-pub fn normalize_dialogs_into_data(dialogs: &Vec<Dialog>) -> Arc<dashmap::DashMap<i64, DialogData>> {
+pub fn normalize_dialogs_into_data(
+    dialogs: &Vec<Dialog>,
+) -> Arc<dashmap::DashMap<i64, DialogData>> {
     let dialogs_data: Arc<dashmap::DashMap<i64, DialogData>> = Arc::new(dashmap::DashMap::new());
 
     for dialog in dialogs {
@@ -242,6 +238,8 @@ pub fn normalize_dialogs_into_data(dialogs: &Vec<Dialog>) -> Arc<dashmap::DashMa
 
         dialogs_data.insert(id, dialog_data);
     }
+
+    println!("Dialogs normalized");
 
     dialogs_data
 }

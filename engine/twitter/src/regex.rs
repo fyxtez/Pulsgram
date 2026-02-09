@@ -3,42 +3,42 @@ use std::sync::OnceLock;
 
 #[derive(Debug, PartialEq)]
 pub enum MessageType {
-    Tweet { 
-        user: String, 
+    Tweet {
+        user: String,
         user_link: Option<String>,
-        text: String 
+        text: String,
     },
-    Retweet { 
-        user: String, 
+    Retweet {
+        user: String,
         user_link: Option<String>,
-        text: String, 
+        text: String,
         mentioned: String,
-        mentioned_link: Option<String>
+        mentioned_link: Option<String>,
     },
-    Reply { 
-        user: String, 
+    Reply {
+        user: String,
         user_link: Option<String>,
-        text: String, 
+        text: String,
         replied_to: String,
-        replied_to_link: Option<String>
+        replied_to_link: Option<String>,
     },
-    Quote { 
-        user: String, 
+    Quote {
+        user: String,
         user_link: Option<String>,
-        text: String, 
+        text: String,
         quoted: String,
-        quoted_link: Option<String>
+        quoted_link: Option<String>,
     },
-    Follow { 
-        follower: String, 
+    Follow {
+        follower: String,
         follower_link: Option<String>,
         followee: String,
         followee_link: Option<String>,
-        profile_info: String 
+        profile_info: String,
     },
-    ProfileUpdate { 
-        user: String, 
-        update_info: String 
+    ProfileUpdate {
+        user: String,
+        update_info: String,
     },
     Unknown,
 }
@@ -80,9 +80,8 @@ pub fn follow_regex() -> &'static Regex {
 
 static PROFILE_UPDATE_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn profile_update_regex() -> &'static Regex {
-    PROFILE_UPDATE_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)").unwrap()
-    })
+    PROFILE_UPDATE_REGEX
+        .get_or_init(|| Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)").unwrap())
 }
 
 pub fn parse_message_type(message: &str) -> MessageType {
@@ -96,7 +95,7 @@ pub fn parse_message_type(message: &str) -> MessageType {
             profile_info: caps[5].to_string(),
         };
     }
-    
+
     // Try profile update pattern
     if let Some(caps) = profile_update_regex().captures(message) {
         return MessageType::ProfileUpdate {
@@ -104,7 +103,7 @@ pub fn parse_message_type(message: &str) -> MessageType {
             update_info: caps[2].to_string(),
         };
     }
-    
+
     // Try retweet pattern
     if let Some(caps) = retweet_regex().captures(message) {
         return MessageType::Retweet {
@@ -115,7 +114,7 @@ pub fn parse_message_type(message: &str) -> MessageType {
             mentioned_link: caps.get(4).map(|m| m.as_str().to_string()),
         };
     }
-    
+
     // Try quote pattern
     if let Some(caps) = quote_regex().captures(message) {
         return MessageType::Quote {
@@ -126,7 +125,7 @@ pub fn parse_message_type(message: &str) -> MessageType {
             quoted_link: caps.get(4).map(|m| m.as_str().to_string()),
         };
     }
-    
+
     // Try reply pattern
     if let Some(caps) = reply_regex().captures(message) {
         return MessageType::Reply {
@@ -137,7 +136,7 @@ pub fn parse_message_type(message: &str) -> MessageType {
             replied_to_link: caps.get(4).map(|m| m.as_str().to_string()),
         };
     }
-    
+
     // Try tweet pattern
     if let Some(caps) = tweet_regex().captures(message) {
         return MessageType::Tweet {
@@ -146,6 +145,6 @@ pub fn parse_message_type(message: &str) -> MessageType {
             text: caps[3].to_string(),
         };
     }
-    
+
     MessageType::Unknown
 }

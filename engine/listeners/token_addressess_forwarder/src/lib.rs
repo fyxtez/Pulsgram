@@ -32,13 +32,13 @@ pub async fn run(
         let sender_username = sender.username().unwrap_or("NO SENDER UNSERNAME");
 
         let (address, blockchain) = extract_token_address_from_message_text(message.text());
-        if address.is_some() {
+        if let Some(address) = address {
             let _ = client
                 .send_message(
                     &forwarding_peer,
                     format!(
                         "Got CA: \n\n{}\n\n from name: {}\n username: {} \n Blockchain: {:?}",
-                        address.unwrap(),
+                        address,
                         sender_name,
                         sender_username,
                         blockchain
