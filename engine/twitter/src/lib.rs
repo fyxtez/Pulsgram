@@ -1,2 +1,2 @@
-// mod local_tests;
+mod local_tests;
 pub mod regex;

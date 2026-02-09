@@ -47,13 +47,16 @@ pub fn retweet_regex() -> &'static Regex {
 
 static QUOTE_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn quote_regex() -> &'static Regex {
-    QUOTE_REGEX.get_or_init(|| Regex::new(r"(?ms)^(?:🖼️)*💬 (\S+) Quoted (\S+)\s*\n+(.+)").unwrap())
+    QUOTE_REGEX.get_or_init(|| {
+        Regex::new(r"(?ms)^(?:🖼️)*💬 (?:\([^)]+\) )?(\S+)(?: \([^)]+\))? Quoted (\S+)(?: \([^)]+\))?\s*\n+(.+)")
+            .unwrap()
+    })
 }
 
 static REPLY_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn reply_regex() -> &'static Regex {
     REPLY_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^(?:🖼️)*🖇️(?:\s*\([^\)]+\))?\s*(\S+)(?:\s*\([^\)]+\))?\s+Replied To\s+(\S+)(?:\s*\([^\)]+\))?\s*\n+(.+)").unwrap()
+        Regex::new(r"(?ms)^(?:[🖼️🎥])*🖇️(?:\s*\([^\)]+\))?\s*(\S+)(?:\s*\([^\)]+\))?\s+Replied To\s+(\S+)(?:\s*\([^\)]+\))?\s*\n+(.+)").unwrap()
     })
 }
 
@@ -69,36 +72,6 @@ static PROFILE_UPDATE_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn profile_update_regex() -> &'static Regex {
     PROFILE_UPDATE_REGEX
         .get_or_init(|| Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)").unwrap())
-}
-
-pub fn parse_message(message: &str) -> Option<(String, String, String, Option<String>)> {
-    if let Some(caps) = tweet_regex().captures(message) {
-        return Some((
-            "Tweeted".to_string(),
-            caps[1].to_string(),
-            caps[2].to_string(),
-            None,
-        ));
-    }
-
-    if let Some(caps) = retweet_regex().captures(message) {
-        return Some((
-            "Retweeted".to_string(),
-            caps[1].to_string(),
-            caps[3].to_string(),
-            Some(caps[2].to_string()),
-        ));
-    }
-
-    if let Some(caps) = reply_regex().captures(message) {
-        return Some((
-            "Replied".to_string(),
-            caps[1].to_string(),
-            caps[3].to_string(),
-            Some(caps[2].to_string()),
-        ));
-    }
-    None
 }
 
 pub fn parse_message_type(message: &str) -> MessageType {
