@@ -6,7 +6,7 @@ use telegram_types::{Client, Peer};
 
 use crate::regex::{parse_trading_signal, remove_emojis};
 
-pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, target_id: i64, signals: Peer) {
+pub async fn run(bus: Arc<EventBus>, client_dispatcher: Arc<Client>, target_id: i64, signals: Peer) {
     println!("Perp Signals running...");
     let mut rx = bus.subscribe();
 
@@ -31,7 +31,7 @@ pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, target_id: i64, signal
 
         let _symbol = result.symbol;
 
-        let result = client
+        let result = client_dispatcher
             .send_message(&signals, remove_emojis(message.text()))
             .await;
 

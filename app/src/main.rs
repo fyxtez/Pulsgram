@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
 
-    if !cfg!(feature = "production"){
+    if !cfg!(feature = "production") {
         dbg!(_dialogs_data_from_dispatcher);
     }
 
@@ -83,6 +83,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kol_follows = peers_map_dispatcher
         .get(&3839014502)
         .ok_or("Could not find kol_follows")?;
+
+    let destination_test = peers_map_dispatcher
+        .get(&5296863242)
+        .ok_or("Cant find test kol follow")?;
 
     let perp_signals = peers_map_dispatcher
         .get(&3725788750)
@@ -122,11 +126,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ));
 
     let kol_follows = kol_follows.clone();
+    let destination_test = destination_test.clone();
     let perp_signals = perp_signals.clone();
 
     tokio::spawn(perp_signals::run(
         Arc::clone(&bus),
-        Arc::clone(&client),
+        Arc::clone(&client_dispatcher),
         8084912410,
         perp_signals,
     ));
@@ -136,6 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         7910357312,
         kol_follows,
         Arc::clone(&client_dispatcher),
+        destination_test,
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
