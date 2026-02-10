@@ -3,3 +3,4 @@
 *.session
 *.json
 TODOs.txt
+deploy.sh

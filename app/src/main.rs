@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         client,
         updates_receiver,
     } = connect_client(
-        "plusgram.session",
+        "pulsgram.session",
         "API_ID",
         "API_HASH",
         "PHONE_NUMBER",
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         client: dispatcher_client,
         updates_receiver: _,
     } = connect_client(
-        "dispatcher.plusgram.session",
+        "dispatcher.pulsgram.session",
         "API_ID",
         "API_HASH",
         "PHONE_NUMBER_DISPATCHER",
@@ -60,6 +60,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
 
     let _dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
+
+    if !cfg!(feature = "production"){
+        dbg!(_dialogs_data_from_dispatcher);
+    }
 
     let peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
 

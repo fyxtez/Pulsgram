@@ -36,7 +36,8 @@ pub async fn run(bus: Arc<EventBus>, client: Arc<Client>, target_id: i64, signal
             .await;
 
         if result.is_err() {
-            dbg!(result.err());
+            println!("{:?}",message.text());
+            println!("{:?}",result.err());
         }
     }
 }

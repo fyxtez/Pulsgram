@@ -3,7 +3,6 @@ use publisher::EventBus;
 use std::sync::Arc;
 use telegram_types::{Client, Message, Peer};
 
-// TODO: Ignored senders implementation
 pub async fn run(
     bus: Arc<EventBus>,
     target_dialog_id: i64,
@@ -27,17 +26,35 @@ pub async fn run(
 }
 
 pub async fn handle_follow(message: Message, dispatcher: &Client, destination: &Peer) {
+    // TODO!
+    if message.text().contains("diloytte"){
+        println!("Ignoring diloytte");
+        return
+    }
+
     if !simple_is_followed_check(message.text()) {return}
 
-    let html_content = remove_emojis(&message.html_text());
-    let input_message = telegram_types::InputMessage::new().html(html_content);
+    let msg_original_html = message.html_text();
 
-    match dispatcher.send_message(destination, input_message).await {
-        Ok(_) => {}
-        Err(err) => {
+    let mut html_content = remove_emojis(&message.html_text());
+
+    dbg!(&msg_original_html);
+    dbg!("-------------");
+    dbg!(&html_content);
+
+    html_content = html_content.replace("null", "");
+
+    if cfg!(feature = "production") {
+        let input_message = telegram_types::InputMessage::new().html(&html_content);
+        if let Err(err) = dispatcher.send_message(destination, input_message).await {
             eprintln!("Failed to send message: {:?}", err);
         }
+    } else {
+        println!("[LOCAL] Would send message: {}", html_content);
     }
+
+
+    println!("{:?}",html_content);
 }
 
 fn remove_emojis(s: &str) -> String {
@@ -48,5 +65,7 @@ fn remove_emojis(s: &str) -> String {
 
 
 fn simple_is_followed_check(message_text: &str)->bool{
-    message_text.contains("followed")
+     let first_line = message_text.lines().next().unwrap_or("");
+
+     first_line.contains("followed")
 }
