@@ -41,9 +41,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = Arc::new(client);
 
-    
     let bus = Arc::new(publisher::new_event_bus());
-    
+
     tokio::spawn(handle_updates(
         Arc::clone(&client),
         updates_receiver,
@@ -55,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dialogs = load_dialogs(&client).await?;
 
     let dialogs_data = normalize_dialogs_into_data(&dialogs);
-    
+
     if !cfg!(feature = "production") {
         dbg!(&dialogs_data);
     }
@@ -94,8 +93,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let perp_signals = peers_map_dispatcher
         .get(&3725788750)
         .ok_or("Could not find perp_signals")?;
+    let perp_kols = peers_map_dispatcher
+        .get(&3851028449)
+        .ok_or("Could not find perp_kols")?;
 
-    // let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
+    let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
     // let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
 
@@ -131,6 +133,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kol_follows = kol_follows.clone();
     let destination_test = destination_test.clone();
     let perp_signals = perp_signals.clone();
+    let perp_kols = perp_kols.clone();
 
     tokio::spawn(perp_signals::run(
         Arc::clone(&bus),
@@ -145,6 +148,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         kol_follows,
         Arc::clone(&client_dispatcher),
         destination_test,
+    ));
+
+    tokio::spawn(perp_kols::run(
+        Arc::clone(&bus),
+        Arc::clone(&client),
+        fyxtez,
+        7910357312,
+        perp_kols,
+        vec![
+            String::from("rektober"),
+            String::from("mmcrypto"),
+            String::from("honey_xbt"),
+            String::from("tradermagus"),
+            String::from("X7H___"),
+            String::from("NellyTradez"),
+            String::from("insomniacxbt"),
+        ],
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();

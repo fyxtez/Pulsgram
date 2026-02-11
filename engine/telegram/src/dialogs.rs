@@ -36,7 +36,9 @@ pub fn find_dialog_data_by_bare_id(
     dialogs: &[DialogData],
     target_bare_id: i64,
 ) -> Option<&DialogData> {
-    dialogs.iter().find(|dialog_data| dialog_data.bare_id == target_bare_id)
+    dialogs
+        .iter()
+        .find(|dialog_data| dialog_data.bare_id == target_bare_id)
 }
 
 pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {

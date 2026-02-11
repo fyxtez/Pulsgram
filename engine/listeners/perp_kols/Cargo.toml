@@ -1,0 +1,8 @@
+[package]
+name = "perp_kols"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+publisher = { path = "../../publisher" }
+telegram_types = { path = "../../telegram_types" }

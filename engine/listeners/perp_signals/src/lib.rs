@@ -25,7 +25,7 @@ pub async fn run(
         }
 
         let message_text = message.text();
-        
+
         let message_cleaned_up = remove_emojis(message_text);
 
         let result = parse_trading_signal(&message_cleaned_up);

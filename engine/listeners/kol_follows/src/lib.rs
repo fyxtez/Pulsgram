@@ -38,7 +38,7 @@ pub async fn handle_follow(
 
     let mut html_content = remove_emojis(&message.html_text());
     html_content = postprocess_html(&html_content);
-    
+
     if message.text().contains("diloytte") {
         // println!("Ignoring diloytte...");
         // let input_message = telegram_types::InputMessage::new().html(&html_content);

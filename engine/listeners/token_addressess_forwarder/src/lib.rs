@@ -38,10 +38,7 @@ pub async fn run(
                     &forwarding_peer,
                     format!(
                         "Got CA: \n\n{}\n\n from name: {}\n username: {} \n Blockchain: {:?}",
-                        address,
-                        sender_name,
-                        sender_username,
-                        blockchain
+                        address, sender_name, sender_username, blockchain
                     ),
                 )
                 .await;

@@ -11,6 +11,7 @@ telegram = { path = "../engine/telegram" }
 telegram_types = { path = "../engine/telegram_types" }
 publisher = { path = "../engine/publisher" }
 kol_follows = { path = "../engine/listeners/kol_follows" }
+perp_kols = { path = "../engine/listeners/perp_kols" }
 forwarder = { path = "../engine/listeners/forwarder" }
 perp_signals = { path = "../engine/listeners/perp_signals" }
 token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
