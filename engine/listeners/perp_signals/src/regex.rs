@@ -60,8 +60,15 @@ pub fn format_signal(signal: &TradingSignal) -> String {
     let target_high = tp3 * 1.02;
 
     format!(
-        "{}USDT · {} · {}\nEntry: {:.4}-{:.4}\nMax Potential Target: {:.4}-{:.4}",
-        signal.symbol, signal.timeframe, direction, entry_low, entry_high, target_low, target_high,
+        "<b>{}</b> | {} | {}\n<b>Entry:</b>  {:.4}-{:.4}\n<b>Target:</b> {:.4}-{:.4}\n<b>Stop:</b>   {:.4}",
+        signal.symbol,
+        signal.timeframe,
+        direction,
+        entry_low,
+        entry_high,
+        target_low,
+        target_high,
+        signal.stop_loss
     )
 }
 

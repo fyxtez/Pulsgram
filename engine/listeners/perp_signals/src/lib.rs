@@ -2,7 +2,7 @@ mod regex;
 
 use publisher::EventBus;
 use std::sync::Arc;
-use telegram_types::{Client, Peer};
+use telegram_types::{Client, InputMessage, Peer};
 
 use crate::regex::{format_signal, parse_trading_signal, remove_emojis};
 
@@ -30,14 +30,17 @@ pub async fn run(
 
         let result = parse_trading_signal(&message_cleaned_up);
 
-        if result.is_none() {
+        if result.is_none() {   
             continue;
         }
         let signal = result.unwrap();
         let formatted_signal = format_signal(&signal);
 
+        let mut input_message = InputMessage::new();
+        input_message = input_message.html(formatted_signal);
+
         match client_dispatcher
-            .send_message(&signals, &formatted_signal)
+            .send_message(&signals, input_message)
             .await
         {
             Ok(_) => {}

@@ -11,6 +11,7 @@ use telegram::{
 };
 use telegram_types::Peer;
 
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -52,21 +53,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_dispatcher = Arc::new(dispatcher_client);
 
     let dialogs = load_dialogs(&client).await?;
-
     let dialogs_data = normalize_dialogs_into_data(&dialogs);
-
     if !cfg!(feature = "production") {
         dbg!(&dialogs_data);
     }
 
     let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
-
-    let _dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
-
+    let dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
     if !cfg!(feature = "production") {
-        dbg!(_dialogs_data_from_dispatcher);
+        dbg!(dialogs_data_from_dispatcher);
     }
 
+    let peers_map = build_peers_map_from_dialogs(&dialogs);
     let peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
 
     // let from_peer = peers_map
@@ -93,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let perp_signals = peers_map_dispatcher
         .get(&3725788750)
         .ok_or("Could not find perp_signals")?;
-    let perp_kols = peers_map_dispatcher
+    let perp_kols = peers_map
         .get(&3851028449)
         .ok_or("Could not find perp_kols")?;
 
@@ -147,7 +145,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         7910357312,
         kol_follows,
         Arc::clone(&client_dispatcher),
-        destination_test,
+        destination_test, // TODO: Unused
     ));
 
     tokio::spawn(perp_kols::run(
@@ -171,9 +169,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // run_migrations("../migrations", db);
 
-    start_api_server("127.0.0.1", 8181, shared_state).await;
+    start_api_server("0.0.0.0", 8181, shared_state).await;
 
     tokio::signal::ctrl_c().await?;
 
     Ok(())
 }
+
