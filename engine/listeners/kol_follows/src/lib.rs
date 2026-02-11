@@ -8,7 +8,6 @@ pub async fn run(
     target_dialog_id: i64,
     destination: Peer,
     dispatcher: Arc<Client>,
-    destination_test: Peer,
 ) {
     println!("KOL Follows running...");
     let mut rx = bus.subscribe();
@@ -22,16 +21,11 @@ pub async fn run(
             continue;
         }
 
-        handle_follow(message, &dispatcher, &destination, &destination_test).await;
+        handle_follow(message, &dispatcher, &destination).await;
     }
 }
 
-pub async fn handle_follow(
-    message: Message,
-    dispatcher: &Client,
-    destination: &Peer,
-    _destination_test: &Peer,
-) {
+pub async fn handle_follow(message: Message, dispatcher: &Client, destination: &Peer) {
     if !simple_is_followed_check(message.text()) {
         return;
     }

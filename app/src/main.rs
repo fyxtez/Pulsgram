@@ -4,13 +4,11 @@ mod utils;
 use api::start_api_server;
 // use db::{connect, run_migrations};
 use dotenv::dotenv;
-use std::sync::Arc;
+use std::{env, sync::Arc};
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{build_peers_map_from_dialogs, get_peer, load_dialogs, normalize_dialogs_into_data},
+    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
 };
-use telegram_types::Peer;
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,46 +62,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(dialogs_data_from_dispatcher);
     }
 
-    let peers_map = build_peers_map_from_dialogs(&dialogs);
-    let peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
+    let mut peers_map = build_peers_map_from_dialogs(&dialogs);
+    let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
 
-    // let from_peer = peers_map
-    //     .get(&1649642332)
-    //     .ok_or("Could not find from_peer")?;
-    // let to_peer = peers_map.get(&5173657056).ok_or("Could not find to_peer")?;
-    // let tokens_peer = peers_map
-    //     .get(&5144995821)
-    //     .ok_or("Could not find tokens_peer")?;
-    // let errors_peer = peers_map
-    //     .get(&3876244916)
-    //     .ok_or("Could not find errors_peer")?;
-    // let users_group_peer = peers_map
-    //     .get(&3692507348)
-    //     .ok_or("Could not find users_group_peer")?;
     let kol_follows = peers_map_dispatcher
-        .get(&3839014502)
+        .remove(&env::var("KOL_FOLLOWS_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Could not find kol_follows")?;
 
-    let destination_test = peers_map_dispatcher
-        .get(&5296863242)
+    let kol_follows_test = peers_map_dispatcher
+        .remove(&env::var("KOL_FOLLOWS_TEST_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Cant find test kol follow")?;
 
     let perp_signals = peers_map_dispatcher
-        .get(&3725788750)
+        .remove(&env::var("PERP_SIGNALS_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Could not find perp_signals")?;
+
+    let perp_signals_test = peers_map_dispatcher
+        .remove(&env::var("PERP_SIGNALS_TEST_CHAT_ID")?.parse::<i64>()?)
+        .ok_or("Could not find perp_signals_test")?;
+
     let perp_kols = peers_map
-        .get(&3851028449)
+        .remove(&env::var("PERP_KOLS_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Could not find perp_kols")?;
 
+    let perp_kols_test = peers_map
+        .remove(&env::var("PERP_KOLS_TEST_CHAT_ID")?.parse::<i64>()?)
+        .ok_or("Could not find perp_kols_test")?;
+
+    let perp_kols_usernames: Vec<String> = env::var("PERP_KOLS_USERNAMES")?
+    .split(',')
+    .map(|s| s.to_string())
+    .collect();
+
     let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
-
-    // let _ignored_senders: HashSet<&'static str> = ["Phanes", "Rick"].into_iter().collect();
-
-    // let _ignored_peers: HashSet<&Peer> = HashSet::new();
-
-    // TODO: Ignore Ph & Ri
-
-    // dump_dialogs_to_json(&dialogs_data, "dialogs.json").unwrap();
 
     let state = app_state::AppState {
         dialogs_data,
@@ -113,66 +104,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let shared_state = Arc::new(state);
 
-    // tokio::spawn(forwarder::run(
-    //     Arc::clone(&client),
-    //     from_peer,
-    //     to_peer,
-    //     Arc::clone(&bus),
-    // ));
-
-    // tokio::spawn(token_addressess_forwarder::run(
-    //     Arc::clone(&bus),
-    //     Arc::clone(&client),
-    //     tokens_peer,
-    //     _ignored_senders,
-    //     _ignored_peers,
-    // ));
-
-    let kol_follows = kol_follows.clone();
-    let destination_test = destination_test.clone();
-    let perp_signals = perp_signals.clone();
-    let perp_kols = perp_kols.clone();
-
     tokio::spawn(perp_signals::run(
         Arc::clone(&bus),
         Arc::clone(&client_dispatcher),
-        8084912410,
-        perp_signals,
+        env::var("LCS_USER_ID")?.parse::<i64>()?,
+        if cfg!(feature = "production") {
+            perp_signals
+        } else {
+            perp_signals_test
+        },
     ));
 
     tokio::spawn(kol_follows::run(
         Arc::clone(&bus),
-        7910357312,
-        kol_follows,
+        env::var("RS_USER_ID")?.parse::<i64>()?,
+        if cfg!(feature = "production") {
+            kol_follows
+        } else {
+            kol_follows_test
+        },
         Arc::clone(&client_dispatcher),
-        destination_test, // TODO: Unused
     ));
 
     tokio::spawn(perp_kols::run(
         Arc::clone(&bus),
         Arc::clone(&client),
         fyxtez,
-        7910357312,
-        perp_kols,
-        vec![
-            String::from("rektober"),
-            String::from("mmcrypto"),
-            String::from("honey_xbt"),
-            String::from("tradermagus"),
-            String::from("X7H___"),
-            String::from("NellyTradez"),
-            String::from("insomniacxbt"),
-        ],
+        env::var("RS_USER_ID")?.parse::<i64>()?,
+        if cfg!(feature = "production") {
+            perp_kols
+        } else {
+            perp_kols_test
+        },
+        perp_kols_usernames,
     ));
 
     // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
 
     // run_migrations("../migrations", db);
 
-    start_api_server("0.0.0.0", 8181, shared_state).await;
+    let address = if cfg!(feature = "production") {
+        "0.0.0.0"
+    } else {
+        "127.0.0.1"
+    };
+
+    start_api_server(address, 8181, shared_state).await;
 
     tokio::signal::ctrl_c().await?;
 
     Ok(())
 }
-

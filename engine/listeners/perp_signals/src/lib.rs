@@ -30,7 +30,7 @@ pub async fn run(
 
         let result = parse_trading_signal(&message_cleaned_up);
 
-        if result.is_none() {   
+        if result.is_none() {
             continue;
         }
         let signal = result.unwrap();
