@@ -7,6 +7,7 @@ pub struct TradingSignal {
     pub is_long: bool, // true = LONG, false = SHORT
     pub entry: f64,
     pub targets: Vec<f64>,
+    pub timeframe: String,
     pub stop_loss: f64,
 }
 
@@ -17,12 +18,14 @@ struct SignalRegexes {
     targets: Regex,
     stop_loss: Regex,
     disclaimer: Regex,
+    timeframe: Regex,
 }
 
 fn regexes() -> &'static SignalRegexes {
     static REGEXES: OnceLock<SignalRegexes> = OnceLock::new();
     REGEXES.get_or_init(|| SignalRegexes {
         symbol: Regex::new(r"([A-Z]+)USDT").unwrap(),
+        timeframe: Regex::new(r"·\s*(\d+[hmdw])").unwrap(),
         direction: Regex::new(r"(LONG|SHORT)").unwrap(),
         entry: Regex::new(r"Entry:\s*([0-9]+\.?[0-9]*)").unwrap(),
         targets: Regex::new(r"TP[0-9]+:\s*([0-9]+\.?[0-9]*)").unwrap(),
@@ -44,6 +47,24 @@ fn is_valid_trading_signal(text: &str) -> bool {
     let is_status_message = text.contains("Target:") || text.contains("Now:");
 
     has_tp_targets && has_stop_loss && !is_status_message
+}
+
+pub fn format_signal(signal: &TradingSignal) -> String {
+    let direction = if signal.is_long { "LONG" } else { "SHORT" };
+
+    let entry_low = signal.entry * 0.99;
+    let entry_high = signal.entry * 1.01;
+
+    let tp3 = signal.targets.last().unwrap();
+    let target_low = tp3 * 0.98;
+    let target_high = tp3 * 1.02;
+
+    format!(
+        "{}USDT · {} · {}\nEntry: {:.4}-{:.4}\nMax Potential Target: {:.4}-{:.4}",
+        signal.symbol, signal.timeframe, direction,
+        entry_low, entry_high,
+        target_low, target_high,
+    )
 }
 
 pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
@@ -69,6 +90,13 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
         "SHORT" => false,
         _ => return None,
     };
+
+    let timeframe = re
+        .timeframe
+        .captures(&cleaned_text)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_string())
+        .unwrap_or_else(|| "1h".to_string());
 
     let entry = re
         .entry
@@ -102,5 +130,6 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
         entry,
         targets,
         stop_loss,
+        timeframe,
     })
 }

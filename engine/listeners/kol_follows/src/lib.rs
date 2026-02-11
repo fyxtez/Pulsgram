@@ -40,7 +40,7 @@ pub async fn handle_follow(
     html_content = postprocess_html(&html_content);
     
     if message.text().contains("diloytte") {
-        println!("Ignoring diloytte...");
+        // println!("Ignoring diloytte...");
         // let input_message = telegram_types::InputMessage::new().html(&html_content);
 
         // let result = dispatcher
@@ -49,7 +49,7 @@ pub async fn handle_follow(
         // if result.is_err() {
         //     dbg!(result.err());
         // }
-        // return;
+        return;
     }
 
     if cfg!(feature = "production") {
@@ -58,8 +58,6 @@ pub async fn handle_follow(
             eprintln!("Failed to send message: {:?}", err);
         }
     }
-
-    println!("{:?}", html_content);
 }
 
 fn remove_emojis(s: &str) -> String {

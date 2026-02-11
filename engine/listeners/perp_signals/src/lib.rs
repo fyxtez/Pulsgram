@@ -4,9 +4,14 @@ use publisher::EventBus;
 use std::sync::Arc;
 use telegram_types::{Client, Peer};
 
-use crate::regex::{parse_trading_signal, remove_emojis};
+use crate::regex::{format_signal, parse_trading_signal, remove_emojis};
 
-pub async fn run(bus: Arc<EventBus>, client_dispatcher: Arc<Client>, target_id: i64, signals: Peer) {
+pub async fn run(
+    bus: Arc<EventBus>,
+    client_dispatcher: Arc<Client>,
+    target_id: i64,
+    signals: Peer,
+) {
     println!("Perp Signals running...");
     let mut rx = bus.subscribe();
 
@@ -20,24 +25,26 @@ pub async fn run(bus: Arc<EventBus>, client_dispatcher: Arc<Client>, target_id: 
         }
 
         let message_text = message.text();
+        
+        let message_cleaned_up = remove_emojis(message_text);
 
-        let result = parse_trading_signal(message_text);
+        let result = parse_trading_signal(&message_cleaned_up);
 
         if result.is_none() {
             continue;
         }
+        let signal = result.unwrap();
+        let formatted_signal = format_signal(&signal);
 
-        let result = result.unwrap();
-
-        let _symbol = result.symbol;
-
-        let result = client_dispatcher
-            .send_message(&signals, remove_emojis(message.text()))
-            .await;
-
-        if result.is_err() {
-            println!("{:?}",message.text());
-            println!("{:?}",result.err());
+        match client_dispatcher
+            .send_message(&signals, &formatted_signal)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("{:?}", message.text());
+                println!("{:?}", err);
+            }
         }
     }
 }

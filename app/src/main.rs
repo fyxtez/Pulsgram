@@ -41,21 +41,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = Arc::new(client);
 
-    let client_dispatcher = Arc::new(dispatcher_client);
-
+    
     let bus = Arc::new(publisher::new_event_bus());
-
+    
     tokio::spawn(handle_updates(
         Arc::clone(&client),
         updates_receiver,
         Arc::clone(&bus),
     ));
 
+    let client_dispatcher = Arc::new(dispatcher_client);
+
     let dialogs = load_dialogs(&client).await?;
 
     let dialogs_data = normalize_dialogs_into_data(&dialogs);
-
-    // dbg!(&dialogs_data);
+    
+    if !cfg!(feature = "production") {
+        dbg!(&dialogs_data);
+    }
 
     let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
 
