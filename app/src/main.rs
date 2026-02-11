@@ -90,9 +90,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("Could not find perp_kols_test")?;
 
     let perp_kols_usernames: Vec<String> = env::var("PERP_KOLS_USERNAMES")?
-    .split(',')
-    .map(|s| s.to_string())
-    .collect();
+        .split(',')
+        .map(|s| s.to_string())
+        .collect();
 
     let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
