@@ -8,7 +8,7 @@ pub struct TradingSignal {
     pub entry: f64,
     pub targets: Vec<f64>,
     pub timeframe: String,
-    pub stop_loss: f64,
+    pub stop_loss: String,
 }
 
 struct SignalRegexes {
@@ -60,15 +60,16 @@ pub fn format_signal(signal: &TradingSignal) -> String {
     let target_high = tp3 * 1.02;
 
     format!(
-        "<b>{}</b> | {} | {}\n<b>Entry:</b>  {:.4}-{:.4}\n<b>Target:</b> {:.4}-{:.4}\n<b>Stop:</b>   {:.4}",
+        "<b>{} {}</b>\n<b>Timeframe:</b> {}\n<b>Entry:</b> {:.3}-{:.3}\n<b>Target:</b> {:.3}-{:.3}\n<b>Stop:</b> {}\n{}",
         signal.symbol,
-        signal.timeframe,
         direction,
+        signal.timeframe,
         entry_low,
         entry_high,
         target_low,
         target_high,
-        signal.stop_loss
+        format!("Optional/Personal"),
+        format!("----This scalp indicator is based on market trend structure and momentum.\n Always check charts before enterig a trade.")
     )
 }
 
@@ -121,13 +122,7 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
         return None;
     }
 
-    let stop_loss = re
-        .stop_loss
-        .captures(&cleaned_text)?
-        .get(1)?
-        .as_str()
-        .parse::<f64>()
-        .ok()?;
+    let stop_loss = String::from("Optional");
 
     Some(TradingSignal {
         symbol,
