@@ -98,8 +98,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
-    let binance_env_vars =
-        binance::utils::load_env_vars("BINANCE_API_KEY_TEST", "BINANCE_API_SECRET_TEST").unwrap();
+    let use_testnet = true;
+
+    let (api_key_var, api_secret_var) = if use_testnet {
+        ("BINANCE_API_KEY_TEST", "BINANCE_API_SECRET_TEST")
+    } else {
+        ("BINANCE_API_KEY", "BINANCE_API_SECRET")
+    };
+    let binance_env_vars = binance::utils::load_env_vars(api_key_var, api_secret_var).unwrap();
 
     let reqwest_client = create_reqwest_client().unwrap();
 
@@ -121,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         dialogs_data,
         client: client.clone(),
         client_dispatcher: client_dispatcher.clone(),
-        reqwest_client: reqwest_client,
+        reqwest_client,
     };
 
     let shared_state = Arc::new(state);
