@@ -26,3 +26,12 @@ where
 
     Ok(())
 }
+
+pub fn create_reqwest_client() -> Result<reqwest::Client, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::builder()
+        .user_agent("Pulsgram/1.0")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    Ok(client)
+}

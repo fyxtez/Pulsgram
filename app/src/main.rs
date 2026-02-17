@@ -10,6 +10,8 @@ use telegram::{
     dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
 };
 
+use crate::utils::create_reqwest_client;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -96,10 +98,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
+    let binance_env_vars =
+        binance::utils::load_env_vars("BINANCE_API_KEY_TEST", "BINANCE_API_SECRET_TEST").unwrap();
+
+    let reqwest_client = create_reqwest_client().unwrap();
+
+    let binance = binance::client::BinanceClient::new(
+        reqwest_client.clone(),
+        binance::constants::TESTNET_FUTURES,
+        &binance_env_vars.api_key,
+        &binance_env_vars.api_secret,
+    );
+
+    let trading_fees = binance
+        .get_trading_fees(binance::constants::Symbol::SOL.as_str())
+        .await
+        .unwrap();
+
+    println!("{}", trading_fees);
+
     let state = app_state::AppState {
         dialogs_data,
         client: client.clone(),
         client_dispatcher: client_dispatcher.clone(),
+        reqwest_client: reqwest_client,
     };
 
     let shared_state = Arc::new(state);

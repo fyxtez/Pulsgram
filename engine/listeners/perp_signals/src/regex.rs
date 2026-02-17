@@ -69,7 +69,9 @@ pub fn format_signal(signal: &TradingSignal) -> String {
         target_low,
         target_high,
         format!("Optional/Personal"),
-        format!("----This scalp indicator is based on market trend structure and momentum.\n Always check charts before enterig a trade.")
+        format!(
+            "----This scalp indicator is based on market trend structure and momentum.\n Always check charts before enterig a trade."
+        )
     )
 }
 
