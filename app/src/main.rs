@@ -66,6 +66,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut peers_map = build_peers_map_from_dialogs(&dialogs);
     let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
 
+    drop(dialogs);
+    drop(dialogs_from_dispatcher);
+
     let kol_follows = peers_map_dispatcher
         .remove(&env::var("KOL_FOLLOWS_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Could not find kol_follows")?;
@@ -94,6 +97,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split(',')
         .map(|s| s.to_string())
         .collect();
+
+    drop(peers_map);
+    drop(peers_map_dispatcher);
 
     let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
 
