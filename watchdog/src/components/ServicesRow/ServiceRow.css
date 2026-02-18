@@ -1,0 +1,55 @@
+.service-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  transition: border-color 0.2s;
+}
+
+.service-row:hover {
+  border-color: #3a3a3a;
+}
+
+.service-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-row__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e5e5e5;
+  letter-spacing: 0.02em;
+}
+
+.service-row__url {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.service-row__status-wrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.service-row__status-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.service-row__latency {
+  font-size: 10px;
+  color: #555;
+  margin-top: 2px;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}

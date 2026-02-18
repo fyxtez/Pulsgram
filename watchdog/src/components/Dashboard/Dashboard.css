@@ -1,0 +1,111 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.dashboard {
+  min-height: 100vh;
+  background: #111;
+  color: #e5e5e5;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  padding: 32px 24px;
+}
+
+/* ── header ── */
+.dashboard__header {
+  max-width: 960px;
+  margin: 0 auto 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dashboard__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: 0.03em;
+}
+
+.dashboard__title-icon {
+  color: #555;
+  margin-right: 8px;
+}
+
+.dashboard__subtitle {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #555;
+}
+
+/* ── summary pills ── */
+.dashboard__pills {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard__pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.dashboard__pill--up {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.dashboard__pill--down {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.dashboard__pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dashboard__pill-dot--up {
+  background: #22c55e;
+}
+
+.dashboard__pill-dot--down {
+  background: #ef4444;
+}
+
+/* ── columns ── */
+.dashboard__columns {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* ── footer ── */
+.dashboard__footer {
+  max-width: 960px;
+  margin: 40px auto 0;
+  padding: 16px 0;
+  border-top: 1px solid #1a1a1a;
+  font-size: 11px;
+  color: #333;
+  font-family: "JetBrains Mono", monospace;
+}
