@@ -179,7 +179,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     start_api_server(address, 8181, shared_state).await;
 
-    tokio::signal::ctrl_c().await?;
-
     Ok(())
 }
