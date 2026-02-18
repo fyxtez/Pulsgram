@@ -1,4 +1,3 @@
-mod constants;
 mod utils;
 
 use api::start_api_server;

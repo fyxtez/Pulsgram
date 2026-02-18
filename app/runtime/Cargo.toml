@@ -1,0 +1,28 @@
+[package]
+name = "runtime"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenv = "0.15.0"
+tokio = { version = "1.49.0", features = ["full"] }
+
+telegram = { path = "../engine/telegram" }
+telegram_types = { path = "../engine/telegram_types" }
+publisher = { path = "../engine/publisher" }
+kol_follows = { path = "../engine/listeners/kol_follows" }
+perp_kols = { path = "../engine/listeners/perp_kols" }
+forwarder = { path = "../engine/listeners/forwarder" }
+perp_signals = { path = "../engine/listeners/perp_signals" }
+token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
+binance = {path = "../engine/binance"}
+app_state = {path = "../engine/app_state"}
+api = {path = "../engine/api"}
+dashmap = "6.1.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+reqwest = { version = "0.13.2", features = ["json"] }
+
+[features]
+default = []         
+production = []  

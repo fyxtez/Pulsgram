@@ -1,28 +1,23 @@
-[package]
-name = "app"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["runtime", "engine/listeners/token_addressess_forwarder", "engine/listeners/forwarder", "engine/publisher","engine/telegram"
+, "engine/api", "engine/telegram_types", "engine/app_state", "engine/listeners/perp_signals", "engine/listeners/kol_follows", "engine/twitter", "engine/listeners/perp_kols", "engine/binance"]
 
-[dependencies]
-dotenv = "0.15.0"
-tokio = { version = "1.49.0", features = ["full"] }
+# persistance is excluded from the workspace because it uses sqlx (postgres)
+# which conflicts with grammers-session's bundled sqlite in the telegram crate.
+# Cargo resolves the entire workspace dependency graph as one unit, so even
+# separate binaries can't have conflicting native library links (sqlite3).
+# Excluding persistance gives it its own isolated dependency graph and Cargo.lock.
+exclude = ["persistence"]
 
-telegram = { path = "../engine/telegram" }
-telegram_types = { path = "../engine/telegram_types" }
-publisher = { path = "../engine/publisher" }
-kol_follows = { path = "../engine/listeners/kol_follows" }
-perp_kols = { path = "../engine/listeners/perp_kols" }
-forwarder = { path = "../engine/listeners/forwarder" }
-perp_signals = { path = "../engine/listeners/perp_signals" }
-token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
-binance = {path = "../engine/binance"}
-app_state = {path = "../engine/app_state"}
-api = {path = "../engine/api"}
-dashmap = "6.1.0"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
-reqwest = { version = "0.13.2", features = ["json"] }
+resolver = "2"
 
-[features]
-default = []         
-production = []  
+[profile.release]
+strip = true        # Remove symbols from binary
+opt-level = 3       # Maximum optimization for speed
+lto = true          # Optimize at link stage ("fat")
+codegen-units = 1   # Reduce parallel codegen to maximize optimizations
+panic = "abort"     # Remove unwind information, reducing binary size and overhead (no backtraces in production)
+
+[profile.dev]
+opt-level = 0
+debug = true
