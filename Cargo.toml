@@ -7,7 +7,7 @@ members = ["app", "engine/listeners/token_addressess_forwarder", "engine/listene
 # Cargo resolves the entire workspace dependency graph as one unit, so even
 # separate binaries can't have conflicting native library links (sqlite3).
 # Excluding persistance gives it its own isolated dependency graph and Cargo.lock.
-exclude = ["persistance"]
+exclude = ["persistence"]
 
 resolver = "2"
 

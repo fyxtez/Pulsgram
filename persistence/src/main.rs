@@ -20,6 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     run(&pool).await?;
 
+    // Running this again will panice cause name and chat_id are unique.
     let chat = create(&pool, "Test", "123").await?;
 
     dump_all(&pool).await?;
