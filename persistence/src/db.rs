@@ -59,8 +59,12 @@ pub async fn restore_all(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>
         for chat in chats {
             chats::create(
                 pool,
-                chat["name"].as_str().ok_or("Invalid db_dump.json: chat.name missing")?,
-                chat["chat_id"].as_str().ok_or("Invalid db_dump.json: chat.chat_id missing")?
+                chat["name"]
+                    .as_str()
+                    .ok_or("Invalid db_dump.json: chat.name missing")?,
+                chat["chat_id"]
+                    .as_str()
+                    .ok_or("Invalid db_dump.json: chat.chat_id missing")?,
             )
             .await?;
         }

@@ -1,9 +1,7 @@
+mod api;
 mod db;
 mod queries;
-use crate::{
-    chats::{create, get_by_id},
-    db::{connect, dump_all, health_check, run},
-};
+use crate::db::{connect, health_check, run};
 pub use queries::chats;
 
 #[tokio::main]
@@ -20,16 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     run(&pool).await?;
 
-    // Running this again will panice cause name and chat_id are unique.
-    let chat = create(&pool, "Test", "123").await?;
-
-    dump_all(&pool).await?;
-
-    let all_chats = chats::get_all(&pool).await?;
-    println!("Chats: {:?}", all_chats);
-
-    let chat_by_id = get_by_id(&pool, chat.id).await?;
-    println!("Chat by ID: {:?}", chat_by_id);
+    api::start_api_server("127.0.0.1", 8180).await?;
 
     Ok(())
 }

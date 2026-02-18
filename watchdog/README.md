@@ -27,7 +27,7 @@ Each service expects its ping endpoint to return a response containing `"pong"` 
 
 | Option          | Location       | Default  |
 |-----------------|---------------------------|
-| `SERVICES`      | `services.ts`  | —        |
+| `SERVICES`      | `services.ts`  | `5000`ms |
 | `POLL_INTERVAL` | `services.ts`  | `5000`ms |
 | Ping timeout    | `ping.ts`      | `5000`ms |
 
