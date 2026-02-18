@@ -1,4 +1,4 @@
-name: Rust CI
+name: Pulsgram CI
 
 on:
   push:
@@ -18,6 +18,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Check code
+        working-directory: app
         run: cargo check --all-features
 
   test:
@@ -28,6 +29,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
+        working-directory: app
         run: cargo test --all-features
 
   fmt:
@@ -39,8 +41,9 @@ jobs:
         with:
           components: rustfmt
       - name: Check formatting
+        working-directory: app
         run: echo "Rustfmt disabled for now"
-        #run: cargo fmt --all -- --check
+        # run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
@@ -52,8 +55,9 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - name: Run clippy
+        working-directory: app
         run: echo "Clippy disabled for now"
-        #run: cargo clippy --all-features -- -D warnings
+        # run: cargo clippy --all-features -- -D warnings
 
   build-release:
     name: Build Release
@@ -65,9 +69,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build release
+        working-directory: app
         run: cargo build --release
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-binary
-          path: target/release/app
+          path: app/target/release/runtime

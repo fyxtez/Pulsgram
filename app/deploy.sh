@@ -42,8 +42,17 @@ echo "Build succeeded."
 # --------------------------
 # DEPLOYMENT STEP
 # --------------------------
+echo "Stopping service before deploy..."
+ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl stop $SERVICE_NAME"
+
 echo "Copying binary to remote server..."
 scp "$LOCAL_FILE" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
+
+if [ $? -ne 0 ]; then
+    echo "SCP failed. Aborting deployment."
+    exit 1
+fi
+
 echo "Binary copied to $REMOTE_HOST:$REMOTE_PATH."
 
 echo "Setting executable permissions on remote binary..."
@@ -96,8 +105,19 @@ ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl status $SERVICE_NAME --no-pager"
 
 echo ""
 echo "Pinging health endpoint..."
-curl "http://$REMOTE_HOST:8181/api/v1/ping"
-echo ""
+PING_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "http://$REMOTE_HOST:8181/api/v1/ping")
+
+if [ "$PING_RESPONSE" = "200" ]; then
+    echo "Health check passed! (HTTP $PING_RESPONSE)"
+else
+    echo "Health check FAILED! (HTTP $PING_RESPONSE)"
+    echo ""
+    echo "Fetching last 30 lines of app log..."
+    ssh "$REMOTE_USER@$REMOTE_HOST" "tail -30 /root/app.log"
+    echo ""
+    echo "Deployment finished but service may not be healthy!"
+    exit 1
+fi
 
 echo ""
 echo "Deployment complete!"

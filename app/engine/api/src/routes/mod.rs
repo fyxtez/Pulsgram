@@ -1,4 +1,6 @@
 mod ping;
+mod cors;
+
 use axum::{
     Extension, Router,
     body::Body,
@@ -8,11 +10,12 @@ use axum::{
 };
 use std::sync::Arc;
 
-use crate::routes::ping::ping;
+use crate::routes::{cors::build_cors_layer, ping::ping};
 
 pub fn create(app_state: Arc<app_state::AppState>) -> Router {
     Router::new()
         .nest("/api/v1", routes())
+        .layer(build_cors_layer())
         .layer(Extension(app_state))
         .fallback(fallback)
 }
