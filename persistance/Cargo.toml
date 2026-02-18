@@ -1,0 +1,18 @@
+[package]
+name = "persistance"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenv = "0.15.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+sqlx = { version = "0.8.6", features = [
+    "postgres",
+    "runtime-tokio",
+    "tls-native-tls",
+    "uuid"
+] }
+
+tokio = { version = "1.49.0", features = ["full"] }
+uuid = { version = "1.21.0", features = ["serde", "v4"] }
