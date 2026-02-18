@@ -23,20 +23,35 @@ struct SignalRegexes {
 
 fn regexes() -> &'static SignalRegexes {
     static REGEXES: OnceLock<SignalRegexes> = OnceLock::new();
+
     REGEXES.get_or_init(|| SignalRegexes {
-        symbol: Regex::new(r"([A-Z]+)USDT").unwrap(),
-        timeframe: Regex::new(r"·\s*(\d+[hmdw])").unwrap(),
-        direction: Regex::new(r"(LONG|SHORT)").unwrap(),
-        entry: Regex::new(r"Entry:\s*([0-9]+\.?[0-9]*)").unwrap(),
-        targets: Regex::new(r"TP[0-9]+:\s*([0-9]+\.?[0-9]*)").unwrap(),
-        stop_loss: Regex::new(r"SL:\s*([0-9]+\.?[0-9]*)").unwrap(),
-        disclaimer: Regex::new(r"(?i)disclaimer:.*").unwrap(),
+        symbol: Regex::new(r"([A-Z]+)USDT").expect("Invalid regex: symbol"),
+
+        timeframe: Regex::new(r"·\s*(\d+[hmdw])").expect("Invalid regex: timeframe"),
+
+        direction: Regex::new(r"(LONG|SHORT)").expect("Invalid regex: direction"),
+
+        entry: Regex::new(r"Entry:\s*([0-9]+\.?[0-9]*)").expect("Invalid regex: entry"),
+
+        targets: Regex::new(r"TP[0-9]+:\s*([0-9]+\.?[0-9]*)").expect("Invalid regex: targets"),
+
+        stop_loss: Regex::new(r"SL:\s*([0-9]+\.?[0-9]*)").expect("Invalid regex: stop_loss"),
+
+        disclaimer: Regex::new(r"(?i)disclaimer:.*").expect("Invalid regex: disclaimer"),
+    })
+}
+
+fn emoji_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+
+    RE.get_or_init(|| {
+        Regex::new(r"[\p{Emoji_Presentation}\p{Extended_Pictographic}]")
+            .expect("Invalid emoji regex")
     })
 }
 
 pub fn remove_emojis(input: &str) -> String {
-    let re = Regex::new(r"[\p{Emoji_Presentation}\p{Extended_Pictographic}]").unwrap();
-    re.replace_all(input, "").to_string()
+    emoji_regex().replace_all(input, "").to_string()
 }
 
 fn is_valid_trading_signal(text: &str) -> bool {
@@ -55,7 +70,10 @@ pub fn format_signal(signal: &TradingSignal) -> String {
     let entry_low = signal.entry * 0.99;
     let entry_high = signal.entry * 1.01;
 
-    let tp3 = signal.targets.last().unwrap();
+    let Some(tp3) = signal.targets.last() else {
+        return String::from("Invalid signal: missing targets");
+    };
+
     let target_low = tp3 * 0.98;
     let target_high = tp3 * 1.02;
 

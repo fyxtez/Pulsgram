@@ -101,7 +101,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     drop(peers_map);
     drop(peers_map_dispatcher);
 
-    let fyxtez = client.resolve_username("Fyxtez").await?.unwrap();
+    let fyxtez = client
+        .resolve_username("Fyxtez")
+        .await?
+        .ok_or("Username Fyxtez not found")?;
 
     let use_testnet = true;
 
@@ -110,9 +113,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         ("BINANCE_API_KEY", "BINANCE_API_SECRET")
     };
-    let binance_env_vars = binance::utils::load_env_vars(api_key_var, api_secret_var).unwrap();
+    let binance_env_vars = binance::utils::load_env_vars(api_key_var, api_secret_var)?;
 
-    let reqwest_client = create_reqwest_client().unwrap();
+    let reqwest_client = create_reqwest_client()?;
 
     let binance = binance::client::BinanceClient::new(
         reqwest_client.clone(),
@@ -123,8 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let trading_fees = binance
         .get_trading_fees(binance::constants::Symbol::SOL.as_str())
-        .await
-        .unwrap();
+        .await?;
 
     println!("{}", trading_fees);
 
@@ -178,7 +180,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "127.0.0.1"
     };
 
-    start_api_server(address, 8181, shared_state).await;
+    start_api_server(address, 8181, shared_state).await?;
 
     Ok(())
 }

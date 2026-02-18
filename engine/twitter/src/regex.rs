@@ -46,42 +46,57 @@ pub enum MessageType {
 static TWEET_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn tweet_regex() -> &'static Regex {
     TWEET_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^(?:🖼️)*📝 (\S+)(?: \((https?://[^\)]+)\))? Tweeted\s*\n+(.+)").unwrap()
+        Regex::new(r"(?ms)^(?:🖼️)*📝 (\S+)(?: \((https?://[^\)]+)\))? Tweeted\s*\n+(.+)")
+            .expect("Invalid TWEET_REGEX pattern")
     })
 }
 
 static RETWEET_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn retweet_regex() -> &'static Regex {
     RETWEET_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^(?:🖼️)*🔄 (\S+)(?: \((https?://[^\)]+)\))? Retweeted (\S+)(?: \((https?://[^\)]+)\))?\s*\n+(.+)").unwrap()
+        Regex::new(
+            r"(?ms)^(?:🖼️)*🔄 (\S+)(?: \((https?://[^\)]+)\))? Retweeted (\S+)(?: \((https?://[^\)]+)\))?\s*\n+(.+)"
+        )
+        .expect("Invalid RETWEET_REGEX pattern")
     })
 }
 
 static QUOTE_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn quote_regex() -> &'static Regex {
     QUOTE_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^(?:🖼️)*💬(?:\s*\([^)]+\))? (\S+)(?: \((https?://[^\)]+)\))? Quoted (\S+)(?: \((https?://[^\)]+)\))?\s*\n+(.+)").unwrap()
+        Regex::new(
+            r"(?ms)^(?:🖼️)*💬(?:\s*\([^)]+\))? (\S+)(?: \((https?://[^\)]+)\))? Quoted (\S+)(?: \((https?://[^\)]+)\))?\s*\n+(.+)"
+        )
+        .expect("Invalid QUOTE_REGEX pattern")
     })
 }
 
 static REPLY_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn reply_regex() -> &'static Regex {
     REPLY_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^(?:[🖼️🎥])*🖇️(?:\s*\([^\)]+\))?\s*(\S+)(?:\s*\((https?://[^\)]+)\))?\s+Replied To\s+(\S+)(?:\s*\((https?://[^\)]+)\))?\s*\n+(.+)").unwrap()
+        Regex::new(
+            r"(?ms)^(?:[🖼️🎥])*🖇️(?:\s*\([^\)]+\))?\s*(\S+)(?:\s*\((https?://[^\)]+)\))?\s+Replied To\s+(\S+)(?:\s*\((https?://[^\)]+)\))?\s*\n+(.+)"
+        )
+        .expect("Invalid REPLY_REGEX pattern")
     })
 }
 
 static FOLLOW_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn follow_regex() -> &'static Regex {
     FOLLOW_REGEX.get_or_init(|| {
-        Regex::new(r"(?ms)^🦶 (\S+)(?: \((https?://[^\)]+)\))? followed (\S+)(?: \((https?://[^\)]+)\))?\s*\n(.+)").unwrap()
+        Regex::new(
+            r"(?ms)^🦶 (\S+)(?: \((https?://[^\)]+)\))? followed (\S+)(?: \((https?://[^\)]+)\))?\s*\n(.+)"
+        )
+        .expect("Invalid FOLLOW_REGEX pattern")
     })
 }
 
 static PROFILE_UPDATE_REGEX: OnceLock<Regex> = OnceLock::new();
 pub fn profile_update_regex() -> &'static Regex {
-    PROFILE_UPDATE_REGEX
-        .get_or_init(|| Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)").unwrap())
+    PROFILE_UPDATE_REGEX.get_or_init(|| {
+        Regex::new(r"(?ms)^🆔 Profile Update - (\S+)\s*\n+(.+)")
+            .expect("Invalid PROFILE_UPDATE_REGEX pattern")
+    })
 }
 
 pub fn parse_message_type(message: &str) -> MessageType {

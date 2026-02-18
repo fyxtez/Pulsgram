@@ -1,5 +1,7 @@
 mod utils;
+use lazy_static::lazy_static;
 use publisher::EventBus;
+use regex::Regex;
 use std::sync::Arc;
 use telegram_types::{Client, Message, Peer};
 
@@ -66,32 +68,45 @@ fn simple_is_followed_check(message_text: &str) -> bool {
     first_line.contains("followed")
 }
 
-// TODO: Expensive method, needs fix or find other solution for the inconsistent blockqotes in telegram rendering.
+lazy_static! {
+    // Compiled once at startup.
+    // If these fail, it's a programmer error (invalid regex literal).
+    static ref RE_NULL: Regex =
+        Regex::new(r"(?i)\bnull\b").expect("Invalid RE_NULL regex");
+
+    static ref RE_BLANK_LINES: Regex =
+        Regex::new(r"\n[ \t]*\n").expect("Invalid RE_BLANK_LINES regex");
+
+    static ref RE_BQ_CLOSE: Regex =
+        Regex::new(r"[\s]+</blockquote>").expect("Invalid RE_BQ_CLOSE regex");
+
+    static ref RE_BQ_OPEN: Regex =
+        Regex::new(r"<blockquote>\s+").expect("Invalid RE_BQ_OPEN regex");
+}
+
+// TODO: Expensive method, needs redesign if Telegram rendering inconsistencies persist.
 fn postprocess_html(html: &str) -> String {
     let mut result = html.to_string();
 
-    // 1. Remove "null" appearing as location text (from JSON nulls)
-    let re_null = regex::Regex::new(r"(?i)\bnull\b").unwrap();
-    result = re_null.replace_all(&result, "").to_string();
+    // 1. Remove "null" appearing as location text (case-insensitive)
+    result = RE_NULL.replace_all(&result, "").to_string();
 
-    // 2. Remove lines that contain only whitespace (inside or outside blockquotes)
-    let re_blank_lines = regex::Regex::new(r"\n[ \t]*\n").unwrap();
-    // Collapse to single newline repeatedly until stable
+    // 2. Collapse consecutive blank lines
     loop {
-        let next = re_blank_lines.replace_all(&result, "\n").to_string();
+        let next = RE_BLANK_LINES.replace_all(&result, "\n").to_string();
         if next == result {
             break;
         }
         result = next;
     }
 
-    // 3. Clean up whitespace right before </blockquote>
-    let re_bq = regex::Regex::new(r"[\s]+</blockquote>").unwrap();
-    result = re_bq.replace_all(&result, "</blockquote>").to_string();
+    // 3. Clean whitespace before </blockquote>
+    result = RE_BQ_CLOSE
+        .replace_all(&result, "</blockquote>")
+        .to_string();
 
-    // 4. Clean up whitespace right after <blockquote>
-    let re_bq_open = regex::Regex::new(r"<blockquote>\s+").unwrap();
-    result = re_bq_open.replace_all(&result, "<blockquote>").to_string();
+    // 4. Clean whitespace after <blockquote>
+    result = RE_BQ_OPEN.replace_all(&result, "<blockquote>").to_string();
 
-    result.replace("null", "")
+    result
 }

@@ -69,7 +69,7 @@ pub async fn connect_client(
 
     println!(
         "Connected to Telegram via {}!",
-        client.get_me().await.unwrap().full_name()
+        client.get_me().await?.full_name()
     );
     Ok(ConnectClientReturnType {
         client,
@@ -93,11 +93,17 @@ pub async fn handle_updates(
     println!("Updates handler spawned.");
 
     loop {
-        let update = updates.next().await;
-        let update = update.unwrap(); // TODO: handle error properly
+        let update_result = updates.next().await;
+        let update = match update_result {
+            Ok(u) => u,
+            Err(e) => {
+                eprintln!("Telegram update stream error: {e}");
+                continue;
+            }
+        };
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
-                // TODO: Probably handle sniper here too.
+                // TODO: Fastest handling of sniper is here.
 
                 publisher::broadcast(
                     event_bus.clone(),
@@ -105,9 +111,7 @@ pub async fn handle_updates(
                     publisher::types::EventTag::Other,
                 );
             }
-            _ => {
-                // println!("Other update: {:?}", update);
-            }
+            _ => {}
         }
     }
 }

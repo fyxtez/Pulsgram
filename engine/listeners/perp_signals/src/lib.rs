@@ -34,6 +34,7 @@ pub async fn run(
             continue;
         }
         let signal = result.unwrap();
+
         let formatted_signal = format_signal(&signal);
 
         let mut input_message = InputMessage::new();

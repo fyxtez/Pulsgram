@@ -8,15 +8,23 @@ pub struct BinanceEnv {
 }
 
 fn get_timestamp() -> u128 {
+    // We expect system time to always be after UNIX_EPOCH (1970-01-01).
+    // If this fails, the machine's clock is misconfigured, which is a fatal
+    // environment issue — not something the application should recover from.
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .expect("System clock is before UNIX_EPOCH — check system time configuration")
         .as_millis()
 }
 
 fn create_signature(query_string: &str, secret: &str) -> String {
-    let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).unwrap();
+    // HMAC accepts keys of any size. If this fails, something is
+    // fundamentally wrong with the crypto configuration.
+    let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes())
+        .expect("Failed to create HMAC-SHA256 instance — invalid secret key");
+
     mac.update(query_string.as_bytes());
+
     hex::encode(mac.finalize().into_bytes())
 }
 
