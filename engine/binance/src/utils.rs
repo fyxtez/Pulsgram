@@ -79,8 +79,6 @@ pub fn load_env_vars(
     })
 }
 
-
-
 #[cfg(test)]
 mod tests_timestamp {
     use super::*;
@@ -114,7 +112,6 @@ mod tests_timestamp {
         assert!(ts2 > ts1);
     }
 }
-
 
 #[cfg(test)]
 mod tests_signature {
@@ -158,7 +155,10 @@ mod tests_signature {
     fn test_known_value() {
         // Pre-computed: echo -n "symbol=BTCUSDT&side=BUY" | openssl dgst -sha256 -hmac "mysecret"
         let sig = create_signature("symbol=BTCUSDT&side=BUY", "mysecret");
-        assert_eq!(sig, "f0fe50c8f82b55b3da13325f82379ff550b523c5853d73595f2a848688bd3434");
+        assert_eq!(
+            sig,
+            "f0fe50c8f82b55b3da13325f82379ff550b523c5853d73595f2a848688bd3434"
+        );
     }
 
     #[test]

@@ -2,7 +2,6 @@ mod constants;
 mod utils;
 
 use api::start_api_server;
-// use db::{connect, run_migrations};
 use dotenv::dotenv;
 use std::{env, sync::Arc};
 use telegram::{
@@ -166,10 +165,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         perp_kols_usernames,
     ));
-
-    // let _db = connect("postgres://pulsgram_user:pulsgram_user@localhost:5432/pulsgram_db").await.unwrap();
-
-    // run_migrations("../migrations", db);
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"
