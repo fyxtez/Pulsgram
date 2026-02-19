@@ -36,10 +36,10 @@ jobs:
         run: cargo test --all-features
 
   # =========================
-  # PERSISTANCE
+  # PERSISTENCE
   # =========================
-  persistance:
-    name: Persistance - Full Check
+  persistence:
+    name: Persistence - Full Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,19 +51,19 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Cargo fmt
-        working-directory: persistance
+        working-directory: persistence
         run: cargo fmt --all -- --check
 
       - name: Cargo clippy
-        working-directory: persistance
+        working-directory: persistence
         run: cargo clippy --all-features -- -D warnings
 
       - name: Cargo test
-        working-directory: persistance
+        working-directory: persistence
         run: cargo test --all-features
 
       - name: Build release
-        working-directory: persistance
+        working-directory: persistence
         run: cargo build --release
 
   # =========================
