@@ -10,69 +10,81 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check
+  # =========================
+  # APP
+  # =========================
+  app-check:
+    name: App - Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Check code
+      - name: Cargo check
         working-directory: app
         run: cargo check --all-features
 
-  test:
-    name: Test Suite
+  app-test:
+    name: App - Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Run tests
+      - name: Cargo test
         working-directory: app
         run: cargo test --all-features
 
-  fmt:
-    name: Rustfmt
+  # =========================
+  # PERSISTANCE
+  # =========================
+  persistance:
+    name: Persistance - Full Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
-      - name: Check formatting
-        working-directory: app
-        run: echo "Rustfmt disabled for now"
-        # run: cargo fmt --all -- --check
+          components: rustfmt, clippy
 
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Run clippy
-        working-directory: app
-        run: echo "Clippy disabled for now"
-        # run: cargo clippy --all-features -- -D warnings
 
-  build-release:
-    name: Build Release
-    if: false
-    runs-on: ubuntu-latest
-    needs: [check, test, fmt, clippy]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - name: Cargo fmt
+        working-directory: persistance
+        run: cargo fmt --all -- --check
+
+      - name: Cargo clippy
+        working-directory: persistance
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Cargo test
+        working-directory: persistance
+        run: cargo test --all-features
+
       - name: Build release
-        working-directory: app
+        working-directory: persistance
         run: cargo build --release
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+
+  # =========================
+  # WATCHDOG (Node project)
+  # =========================
+  watchdog:
+    name: Watchdog - Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          name: release-binary
-          path: app/target/release/runtime
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: watchdog/package-lock.json
+
+      - name: Install dependencies
+        working-directory: watchdog
+        run: npm ci
+
+      - name: Build
+        working-directory: watchdog
+        run: npm run build
