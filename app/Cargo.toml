@@ -21,3 +21,4 @@ panic = "abort"     # Remove unwind information, reducing binary size and overhe
 [profile.dev]
 opt-level = 0
 debug = true
+
