@@ -182,7 +182,6 @@ pub fn print_peer_data(peer: &Peer) {
 }
 
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
-    let peer_name = peer.name().unwrap_or("Unnamed");
     match peer {
         Peer::User(user) => {
             let id = user.bare_id();
@@ -199,10 +198,6 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
 
         Peer::Group(group) => {
             let id = group.id().bare_id();
-
-            if peer_name.eq("Trenches Bunker Messages") {
-                dbg!("1111");
-            }
 
             let data = DialogData {
                 name: group.title().unwrap_or("Unnamed group").to_string(),
@@ -229,10 +224,8 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     }
 }
 
-pub fn normalize_dialogs_into_data(
-    dialogs: &Vec<Dialog>,
-) -> Arc<dashmap::DashMap<i64, DialogData>> {
-    let dialogs_data: Arc<dashmap::DashMap<i64, DialogData>> = Arc::new(dashmap::DashMap::new());
+pub fn normalize_dialogs_into_data(dialogs: &Vec<Dialog>) -> dashmap::DashMap<i64, DialogData> {
+    let dialogs_data: dashmap::DashMap<i64, DialogData> = dashmap::DashMap::new();
 
     for dialog in dialogs {
         let peer = dialog.peer();

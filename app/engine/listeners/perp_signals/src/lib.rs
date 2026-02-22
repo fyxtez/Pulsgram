@@ -40,6 +40,8 @@ pub async fn run(
         let mut input_message = InputMessage::new();
         input_message = input_message.html(formatted_signal);
 
+        // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
+        // novi listener ce da slusa na taj novi event i radi sta trijeba.
         match client_dispatcher
             .send_message(&signals, input_message)
             .await

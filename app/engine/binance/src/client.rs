@@ -98,12 +98,14 @@ impl BinanceClient {
     pub async fn place_market_order(
         &self,
         symbol: &str,
-        side:&OrderSide,
+        side: &OrderSide,
         quantity: f64,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let query = format!(
             "symbol={}&side={}&type=MARKET&quantity={}",
-            symbol, side.as_str(), quantity
+            symbol,
+            side.as_str(),
+            quantity
         );
 
         send_signed_request(
@@ -144,7 +146,10 @@ impl BinanceClient {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let query = format!(
             "symbol={}&side={}&type=LIMIT&quantity={}&price={}&timeInForce=GTC",
-            symbol, side.as_str(), quantity, price
+            symbol,
+            side.as_str(),
+            quantity,
+            price
         );
 
         send_signed_request(
@@ -165,7 +170,6 @@ mod tests {
     use crate::constants;
 
     use super::*;
-    use std::env;
 
     fn test_client(url: &str) -> BinanceClient {
         dotenv::from_filename("app/.env").ok();
@@ -236,7 +240,9 @@ mod tests {
     async fn test_place_market_order() {
         let client = test_client(constants::TESTNET_FUTURES);
 
-        let result = client.place_market_order("BTCUSDT", &OrderSide::Buy, 0.01).await;
+        let result = client
+            .place_market_order("BTCUSDT", &OrderSide::Buy, 0.01)
+            .await;
 
         println!("{result:?}");
 

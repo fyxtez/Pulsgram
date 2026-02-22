@@ -9,7 +9,6 @@ use crate::routes::create;
 
 use std::error::Error;
 
-
 pub async fn start_api_server(
     address: &str,
     port: i32,

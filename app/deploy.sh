@@ -19,7 +19,7 @@ set +a
 # TEST STEP
 # --------------------------
 echo "Running Rust tests..."
-cargo test -- --include-ignored # Can do this but only localy for now.
+cargo test -- --nocapture --include-ignored # Can do this but only localy for now.
 
 if [ $? -ne 0 ]; then
     echo "Tests failed. Aborting deployment."

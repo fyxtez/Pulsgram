@@ -1,5 +1,5 @@
-mod ping;
 mod cors;
+mod ping;
 
 use axum::{
     Extension, Router,
