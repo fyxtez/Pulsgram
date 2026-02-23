@@ -13,6 +13,7 @@ publisher = { path = "../engine/publisher" }
 kol_follows = { path = "../engine/listeners/kol_follows" }
 perp_kols = { path = "../engine/listeners/perp_kols" }
 forwarder = { path = "../engine/listeners/forwarder" }
+errors_reporter = { path = "../engine/listeners/errors_reporter" }
 perp_signals = { path = "../engine/listeners/perp_signals" }
 token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
 binance = {path = "../engine/binance"}

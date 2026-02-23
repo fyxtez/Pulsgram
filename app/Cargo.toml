@@ -1,6 +1,6 @@
 [workspace]
 members = ["runtime", "engine/listeners/token_addressess_forwarder", "engine/listeners/forwarder", "engine/publisher","engine/telegram"
-, "engine/api", "engine/telegram_types", "engine/app_state", "engine/listeners/perp_signals", "engine/listeners/kol_follows", "engine/twitter", "engine/listeners/perp_kols", "engine/binance"]
+, "engine/api", "engine/telegram_types", "engine/app_state", "engine/listeners/perp_signals", "engine/listeners/kol_follows", "engine/twitter", "engine/listeners/perp_kols", "engine/binance", "engine/listeners/errors_reporter"]
 
 # persistance is excluded from the workspace because it uses sqlx (postgres)
 # which conflicts with grammers-session's bundled sqlite in the telegram crate.

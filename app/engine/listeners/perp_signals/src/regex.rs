@@ -67,8 +67,10 @@ pub fn format_signal(signal: &TradingSignal) -> String {
     let target_low = tp3 * 0.98;
     let target_high = tp3 * 1.02;
 
+    let stop_loss = signal.stop_loss;
+
     format!(
-        "<b>{} {}</b>\n<b>Timeframe:</b> {}\n<b>Entry:</b> {:.3}-{:.3}\n<b>Target:</b> {:.3}-{:.3}\n<b>Stop:</b> {}\n{}",
+        "<b>{} {}</b>\n<b>Timeframe:</b> {}\n<b>Entry:</b> {:.3}-{:.3}\n<b>Target:</b> {:.3}-{:.3}\n<b>Stop:</b> {}\n",
         signal.symbol,
         direction,
         signal.timeframe,
@@ -76,8 +78,7 @@ pub fn format_signal(signal: &TradingSignal) -> String {
         entry_high,
         target_low,
         target_high,
-        "Optional/Personal",
-        "----This scalp indicator is based on market trend structure and momentum.\n Always check charts before entering a trade."
+        stop_loss,
     )
 }
 

@@ -477,6 +477,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "errors_reporter"
+version = "0.1.0"
+dependencies = [
+ "publisher",
+ "telegram_types",
+ "tokio",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1943,6 +1952,7 @@ dependencies = [
  "binance",
  "dashmap",
  "dotenv",
+ "errors_reporter",
  "forwarder",
  "kol_follows",
  "perp_kols",

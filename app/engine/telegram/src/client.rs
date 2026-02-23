@@ -80,6 +80,7 @@ pub async fn handle_updates(
     client: Arc<Client>,
     updates_receiver: UnboundedReceiver<UpdatesLike>,
     event_bus: Arc<publisher::EventBus>,
+    dispatcher_user_id: i64,
 ) {
     let mut updates = client.stream_updates(
         updates_receiver,
@@ -100,8 +101,27 @@ pub async fn handle_updates(
                 continue;
             }
         };
+
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
+                if let Some(sender) = message.sender() {
+                    if sender.id().bare_id() == dispatcher_user_id {
+                        // Ignore dispatcher messages
+                        continue;
+                    }
+                } else {
+                    // Sender does not exist. Checking Peer.
+                    if let Ok(peer) = message.peer() {
+                        let peer_id = peer.id().bare_id();
+                        if peer_id == 3228445189 {
+                            // TODO: Temporary solution. This is the ID of Pulsgram Errors channel.
+                            // Peer is Pulsgram Errors channel. Ignoring to prevent loop.
+                            continue;
+                        }
+                    } else {
+                        println!("No sender or peer information available for this message. {:?}",message);
+                    }
+                }
                 // TODO: Fastest handling of sniper is here.
 
                 publisher::broadcast(
@@ -113,14 +133,6 @@ pub async fn handle_updates(
             _ => {}
         }
     }
-}
-
-pub fn report_error(client: Arc<Client>, errors_peer: Peer, message: String) {
-    tokio::spawn(async move {
-        if let Err(e) = client.send_message(errors_peer, message).await {
-            eprintln!("Failed to send error message: {e}");
-        }
-    });
 }
 
 pub async fn toggle_mute_peer(

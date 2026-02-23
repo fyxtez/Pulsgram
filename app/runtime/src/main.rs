@@ -39,6 +39,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
 
     let client = Arc::new(client);
+    let client_dispatcher = Arc::new(dispatcher_client);
+
+    let dispatcher_me = client_dispatcher.get_me().await?;
+    let dispatcher_id = dispatcher_me.bare_id();
 
     let bus = Arc::new(publisher::new_event_bus());
 
@@ -46,9 +50,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&client),
         updates_receiver,
         Arc::clone(&bus),
+        dispatcher_id,
     ));
-
-    let client_dispatcher = Arc::new(dispatcher_client);
 
     let dialogs = load_dialogs(&client).await?;
     let dialogs_data = normalize_dialogs_into_data(&dialogs);
@@ -71,6 +74,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kol_follows = peers_map_dispatcher
         .remove(&env::var("KOL_FOLLOWS_CHAT_ID")?.parse::<i64>()?)
         .ok_or("Could not find kol_follows")?;
+
+    let errors_peer = peers_map_dispatcher
+        .remove(&env::var("ERRORS_PEER_ID")?.parse::<i64>()?)
+        .ok_or("Could not find errors peer")?;
 
     let kol_follows_test = peers_map_dispatcher
         .remove(&env::var("KOL_FOLLOWS_TEST_CHAT_ID")?.parse::<i64>()?)
@@ -116,18 +123,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let reqwest_client = create_reqwest_client()?;
 
-    let binance = binance::client::BinanceClient::new(
+    let _binance = binance::client::BinanceClient::new(
         reqwest_client.clone(),
         binance::constants::TESTNET_FUTURES,
         &binance_env_vars.api_key,
         &binance_env_vars.api_secret,
     );
-
-    let trading_fees = binance
-        .get_trading_fees(binance::constants::Symbol::SOL.as_str())
-        .await?;
-
-    println!("{}", trading_fees);
 
     let state = app_state::AppState {
         dialogs_data,
@@ -147,6 +148,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             perp_signals_test
         },
+    ));
+
+    tokio::spawn(errors_reporter::run(
+        Arc::clone(&client_dispatcher),
+        errors_peer,
+        Arc::clone(&bus),
     ));
 
     tokio::spawn(kol_follows::run(

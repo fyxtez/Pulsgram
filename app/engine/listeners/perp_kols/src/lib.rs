@@ -14,8 +14,10 @@ pub async fn run(
 
     let mut rx = bus.subscribe();
 
-    let target_kols_lowercase: Vec<String> =
-        target_kols.into_iter().map(|kol| kol.to_lowercase()).collect();
+    let target_kols_lowercase: Vec<String> = target_kols
+        .into_iter()
+        .map(|kol| kol.to_lowercase())
+        .collect();
 
     while let Ok(event) = rx.recv().await {
         let message = event.message;
@@ -28,7 +30,7 @@ pub async fn run(
 
         let message_text = message.text();
         let message_text_lower = message_text.to_lowercase(); // ✅ once per message
-        
+
         // Check if any target KOL is mentioned
         if !target_kols_lowercase
             .iter()

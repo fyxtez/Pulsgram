@@ -17,10 +17,14 @@ pub enum OrderSide {
 
 impl fmt::Display for OrderSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match self {
-            OrderSide::Buy => "BUY",
-            OrderSide::Sell => "SELL",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                OrderSide::Buy => "BUY",
+                OrderSide::Sell => "SELL",
+            }
+        )
     }
 }
 
@@ -105,9 +109,7 @@ impl BinanceClient {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let query = format!(
             "symbol={}&side={}&type=MARKET&quantity={}",
-            symbol,
-            side,
-            quantity
+            symbol, side, quantity
         );
 
         send_signed_request(
@@ -148,10 +150,7 @@ impl BinanceClient {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let query = format!(
             "symbol={}&side={}&type=LIMIT&quantity={}&price={}&timeInForce=GTC",
-            symbol,
-            side,
-            quantity,
-            price
+            symbol, side, quantity, price
         );
 
         send_signed_request(
