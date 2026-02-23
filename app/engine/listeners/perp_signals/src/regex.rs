@@ -8,7 +8,7 @@ pub struct TradingSignal {
     pub entry: f64,
     pub targets: Vec<f64>,
     pub timeframe: String,
-    pub stop_loss: String,
+    pub stop_loss: f64,
 }
 
 struct SignalRegexes {
@@ -25,7 +25,7 @@ fn regexes() -> &'static SignalRegexes {
     static REGEXES: OnceLock<SignalRegexes> = OnceLock::new();
 
     REGEXES.get_or_init(|| SignalRegexes {
-        symbol: Regex::new(r"([A-Z]+)USDT").expect("Invalid regex: symbol"),
+        symbol: Regex::new(r"\b([A-Z]+)USDT\b").expect("Invalid regex: symbol"),
 
         timeframe: Regex::new(r"·\s*(\d+[hmdw])").expect("Invalid regex: timeframe"),
 
@@ -50,18 +50,8 @@ fn emoji_regex() -> &'static Regex {
     })
 }
 
-pub fn remove_emojis(input: &str) -> String {
-    emoji_regex().replace_all(input, "").to_string()
-}
-
-fn is_valid_trading_signal(text: &str) -> bool {
-    let re = regexes();
-
-    let has_tp_targets = re.targets.is_match(text);
-    let has_stop_loss = re.stop_loss.is_match(text);
-    let is_status_message = text.contains("Target:") || text.contains("Now:");
-
-    has_tp_targets && has_stop_loss && !is_status_message
+pub fn remove_emojis(input: &str) -> std::borrow::Cow<'_, str> {
+    emoji_regex().replace_all(input, "")
 }
 
 pub fn format_signal(signal: &TradingSignal) -> String {
@@ -92,10 +82,6 @@ pub fn format_signal(signal: &TradingSignal) -> String {
 }
 
 pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
-    if !is_valid_trading_signal(text) {
-        return None;
-    }
-
     let re = regexes();
 
     let cleaned_text = re.disclaimer.replace_all(text, "");
@@ -109,18 +95,14 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
 
     let direction_str = re.direction.captures(&cleaned_text)?.get(1)?.as_str();
 
-    let is_long = match direction_str {
-        "LONG" => true,
-        "SHORT" => false,
-        _ => return None,
-    };
+    let is_long = direction_str == "LONG";
 
     let timeframe = re
         .timeframe
         .captures(&cleaned_text)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().to_string())
-        .unwrap_or_else(|| "1h".to_string());
+        .unwrap_or("1h".into());
 
     let entry = re
         .entry
@@ -136,11 +118,17 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
         .filter_map(|cap| cap.get(1)?.as_str().parse::<f64>().ok())
         .collect();
 
+    let stop_loss = re
+        .stop_loss
+        .captures(&cleaned_text)?
+        .get(1)?
+        .as_str()
+        .parse::<f64>()
+        .ok()?;
+
     if targets.is_empty() {
         return None;
     }
-
-    let stop_loss = String::from("Optional");
 
     Some(TradingSignal {
         symbol,

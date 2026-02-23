@@ -2,7 +2,7 @@ mod utils;
 use lazy_static::lazy_static;
 use publisher::EventBus;
 use regex::Regex;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use telegram_types::{Client, Message, Peer};
 
 pub async fn run(
@@ -19,7 +19,7 @@ pub async fn run(
 
         let peer_id = message.peer_id().bare_id();
 
-        if !target_dialog_id.eq(&peer_id) {
+        if peer_id != target_dialog_id {
             continue;
         }
 
@@ -32,8 +32,7 @@ pub async fn handle_follow(message: Message, dispatcher: &Client, destination: &
         return;
     }
 
-    let mut html_content = remove_emojis(&message.html_text());
-    html_content = postprocess_html(&html_content);
+    let html_content = postprocess_html(&remove_emojis(&message.html_text()));
 
     if message.text().contains("diloytte") {
         // println!("Ignoring diloytte...");
@@ -56,10 +55,17 @@ pub async fn handle_follow(message: Message, dispatcher: &Client, destination: &
     }
 }
 
-fn remove_emojis(s: &str) -> String {
-    s.chars()
-        .filter(|c| c.is_ascii() || (*c as u32) < 0x1F000)
-        .collect()
+fn emoji_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+
+    RE.get_or_init(|| {
+        Regex::new(r"[\p{Emoji_Presentation}\p{Extended_Pictographic}]")
+            .expect("Invalid emoji regex")
+    })
+}
+
+pub fn remove_emojis(input: &str) -> std::borrow::Cow<'_, str> {
+    emoji_regex().replace_all(input, "")
 }
 
 fn simple_is_followed_check(message_text: &str) -> bool {
@@ -84,29 +90,14 @@ lazy_static! {
         Regex::new(r"<blockquote>\s+").expect("Invalid RE_BQ_OPEN regex");
 }
 
-// TODO: Expensive method, needs redesign if Telegram rendering inconsistencies persist.
 fn postprocess_html(html: &str) -> String {
-    let mut result = html.to_string();
-
-    // 1. Remove "null" appearing as location text (case-insensitive)
-    result = RE_NULL.replace_all(&result, "").to_string();
-
-    // 2. Collapse consecutive blank lines
-    loop {
-        let next = RE_BLANK_LINES.replace_all(&result, "\n").to_string();
-        if next == result {
-            break;
-        }
-        result = next;
-    }
-
-    // 3. Clean whitespace before </blockquote>
-    result = RE_BQ_CLOSE
-        .replace_all(&result, "</blockquote>")
-        .to_string();
-
-    // 4. Clean whitespace after <blockquote>
-    result = RE_BQ_OPEN.replace_all(&result, "<blockquote>").to_string();
-
-    result
+    RE_BQ_OPEN
+        .replace_all(
+            &RE_BQ_CLOSE.replace_all(
+                &RE_BLANK_LINES.replace_all(&RE_NULL.replace_all(html, ""), "\n"),
+                "</blockquote>",
+            ),
+            "<blockquote>",
+        )
+        .to_string()
 }

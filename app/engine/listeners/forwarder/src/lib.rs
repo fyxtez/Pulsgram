@@ -22,7 +22,7 @@ pub async fn run(
         let mut message_text = message.text().to_string();
 
         if message_text.is_empty() {
-            message_text = "<non-text message (sticker or img)>\n Sent by: xxxxxxxxxx".to_string();
+            message_text = "<non-text message (sticker or img)>\n".to_string();
         }
 
         //TODO: Add message sender/peer who sent the message.

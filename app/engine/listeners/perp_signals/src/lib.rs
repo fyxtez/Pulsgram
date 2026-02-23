@@ -20,25 +20,19 @@ pub async fn run(
 
         let message_peer_id = message.peer_id();
 
-        if !message_peer_id.bare_id().eq(&target_id) {
+        if message_peer_id.bare_id() != target_id {
             continue;
         }
 
-        let message_text = message.text();
+        let message_cleaned_up = remove_emojis(message.text());
 
-        let message_cleaned_up = remove_emojis(message_text);
-
-        let result = parse_trading_signal(&message_cleaned_up);
-
-        if result.is_none() {
+        let Some(signal) = parse_trading_signal(&message_cleaned_up) else {
             continue;
-        }
-        let signal = result.unwrap();
+        };
 
         let formatted_signal = format_signal(&signal);
 
-        let mut input_message = InputMessage::new();
-        input_message = input_message.html(formatted_signal);
+        let input_message = InputMessage::new().html(formatted_signal);
 
         // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
         // novi listener ce da slusa na taj novi event i radi sta trijeba.

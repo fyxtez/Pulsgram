@@ -24,11 +24,10 @@ pub struct ConnectClientReturnType {
 }
 
 fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, Box<dyn Error>> {
-    let session = SqliteSession::open(session_path)?;
-
-    let sender_pool = SenderPool::new(std::sync::Arc::new(session), api_id);
-
-    Ok(sender_pool)
+    Ok(SenderPool::new(
+        Arc::new(SqliteSession::open(session_path)?),
+        api_id,
+    ))
 }
 
 pub async fn connect_client(
@@ -135,14 +134,10 @@ pub async fn toggle_mute_peer(
     let notify_peer =
         InputNotifyPeer::Peer(grammers_tl_types::types::InputNotifyPeer { peer: input_peer });
 
-    let mute_until = match mute {
-        true => Some(i32::MAX),
-        false => Some(i32::MIN),
-    };
     let ipns = grammers_tl_types::types::InputPeerNotifySettings {
         show_previews: Some(false),
         silent: Some(false),
-        mute_until,
+        mute_until: Some(if mute { i32::MAX } else { i32::MIN }),
         sound: None,
         stories_muted: Some(false),
         stories_hide_sender: Some(false),

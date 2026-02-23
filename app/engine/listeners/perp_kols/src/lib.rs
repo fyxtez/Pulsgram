@@ -15,23 +15,24 @@ pub async fn run(
     let mut rx = bus.subscribe();
 
     let target_kols_lowercase: Vec<String> =
-        target_kols.iter().map(|kol| kol.to_lowercase()).collect();
+        target_kols.into_iter().map(|kol| kol.to_lowercase()).collect();
 
     while let Ok(event) = rx.recv().await {
         let message = event.message;
 
         let message_peer_id = message.peer_id();
 
-        if !message_peer_id.bare_id().eq(&from_target_id) {
+        if message_peer_id.bare_id() != from_target_id {
             continue;
         }
 
         let message_text = message.text();
-
+        let message_text_lower = message_text.to_lowercase(); // ✅ once per message
+        
         // Check if any target KOL is mentioned
         if !target_kols_lowercase
             .iter()
-            .any(|kol| message_text.to_lowercase().contains(kol))
+            .any(|kol| message_text_lower.contains(kol))
         {
             continue;
         }

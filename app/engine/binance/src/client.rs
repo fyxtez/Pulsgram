@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::utils::send_signed_request;
 use reqwest::Method;
 
@@ -13,12 +15,12 @@ pub enum OrderSide {
     Sell,
 }
 
-impl OrderSide {
-    fn as_str(&self) -> &'static str {
-        match self {
+impl fmt::Display for OrderSide {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
             OrderSide::Buy => "BUY",
             OrderSide::Sell => "SELL",
-        }
+        })
     }
 }
 
@@ -104,7 +106,7 @@ impl BinanceClient {
         let query = format!(
             "symbol={}&side={}&type=MARKET&quantity={}",
             symbol,
-            side.as_str(),
+            side,
             quantity
         );
 
@@ -147,7 +149,7 @@ impl BinanceClient {
         let query = format!(
             "symbol={}&side={}&type=LIMIT&quantity={}&price={}&timeInForce=GTC",
             symbol,
-            side.as_str(),
+            side,
             quantity,
             price
         );
