@@ -12,22 +12,23 @@ pub async fn save_photo(
 }
 
 pub fn extract_photo_url_from_raw(update: &tl::enums::Update) -> Option<String> {
-    if let tl::enums::Update::NewMessage(u) = update {
-        if let tl::enums::Message::Message(msg) = &u.message {
-            if let Some(tl::enums::MessageMedia::WebPage(wp)) = &msg.media {
-                match &wp.webpage {
-                    tl::enums::WebPage::Pending(pending) => {
-                        return pending.url.clone();
-                    }
-                    tl::enums::WebPage::Page(page) => {
-                        return Some(page.url.clone());
-                    }
-                    _ => {}
-                }
-            }
-        }
+    let tl::enums::Update::NewMessage(u) = update else {
+        return None;
+    };
+
+    let tl::enums::Message::Message(msg) = &u.message else {
+        return None;
+    };
+
+    let Some(tl::enums::MessageMedia::WebPage(wp)) = &msg.media else {
+        return None;
+    };
+
+    match &wp.webpage {
+        tl::enums::WebPage::Pending(pending) => pending.url.clone(),
+        tl::enums::WebPage::Page(page) => Some(page.url.clone()),
+        _ => None,
     }
-    None
 }
 
 #[cfg(test)]
@@ -109,7 +110,9 @@ mod tests {
         let url = extract_photo_url_from_raw(&update);
         assert_eq!(
             url,
-            Some("https://pbs.twimg.com/profile_images/2024150251234320384/DUACK2O3.jpg".to_string())
+            Some(
+                "https://pbs.twimg.com/profile_images/2024150251234320384/DUACK2O3.jpg".to_string()
+            )
         );
     }
 

@@ -84,9 +84,7 @@ pub async fn get_peer_by_bare_id(
     Ok(None)
 }
 
-pub async fn build_peers_map_from_dialogs(
-    dialogs: &[Dialog],
-) -> HashMap<i64, PeerRef> {
+pub async fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, PeerRef> {
     let mut map = HashMap::new();
 
     for dialog in dialogs {
@@ -150,7 +148,10 @@ pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
         let peer = dialog.peer();
 
         let (id, name) = match peer {
-            Peer::User(user) => (user.id().bare_id(), user.username().unwrap_or("No username")),
+            Peer::User(user) => (
+                user.id().bare_id(),
+                user.username().unwrap_or("No username"),
+            ),
             Peer::Group(group) => (group.id().bare_id(), group.title().unwrap_or("No title")),
             Peer::Channel(channel) => (channel.id().bare_id(), channel.title()),
         };

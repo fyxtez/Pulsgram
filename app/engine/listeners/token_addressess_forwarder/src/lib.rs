@@ -4,7 +4,6 @@ use std::sync::Arc;
 use blockchains_address_extractor::extract_token_address_from_message_text;
 use publisher::EventBus;
 use telegram_types::Client;
-use telegram_types::Peer;
 use telegram_types::PeerRef;
 
 // TODO: Ignored senders implementation
@@ -13,7 +12,7 @@ pub async fn run(
     client: Arc<Client>,
     forwarding_peer: PeerRef,
     _ignored_senders: HashSet<&'static str>,
-    _ignored_peers: HashSet<&Peer>,
+    _ignored_peers: HashSet<&PeerRef>,
 ) {
     let mut rx = bus.subscribe();
 

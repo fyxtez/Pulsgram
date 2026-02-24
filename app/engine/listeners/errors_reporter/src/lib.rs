@@ -9,7 +9,7 @@ pub async fn run(client: Arc<Client>, to_peer: PeerRef, bus: Arc<publisher::Even
     while let Ok(event) = rx.recv().await {
         //TODO: Needs proper error event, not TgEvent
         return;
-        
+
         let error_message = event.message;
 
         let message_text = error_message.text().to_string();

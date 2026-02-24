@@ -2,8 +2,8 @@ mod regex;
 
 use publisher::EventBus;
 use std::sync::Arc;
-use telegram_types::{Client, InputMessage};
 use telegram_types::PeerRef;
+use telegram_types::{Client, InputMessage};
 
 use crate::regex::{format_signal, parse_trading_signal, remove_emojis};
 
@@ -37,10 +37,7 @@ pub async fn run(
 
         // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
         // novi listener ce da slusa na taj novi event i radi sta trijeba.
-        match client_dispatcher
-            .send_message(signals, input_message)
-            .await
-        {
+        match client_dispatcher.send_message(signals, input_message).await {
             Ok(_) => {}
             Err(err) => {
                 println!("{:?}", message.text());
