@@ -7,10 +7,9 @@ pub async fn run(client: Arc<Client>, to_peer: Peer, bus: Arc<publisher::EventBu
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {
-        println!("Skipping...");
-        // Currently return untill events gets implemented correctly and not just TgEvents.
+        //TODO: Needs proper error event, not TgEvent
         return;
-
+        
         let error_message = event.message;
 
         let message_text = error_message.text().to_string();

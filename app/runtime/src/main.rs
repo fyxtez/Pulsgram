@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
 
     let ConnectClientReturnType {
-        client: dispatcher_client,
+        client: client_dispatcher,
         updates_receiver: _,
     } = connect_client(
         "dispatcher.pulsgram.session",
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
 
     let client = Arc::new(client);
-    let client_dispatcher = Arc::new(dispatcher_client);
+    let client_dispatcher = Arc::new(client_dispatcher);
 
     let dispatcher_me = client_dispatcher.get_me().await?;
     let dispatcher_id = dispatcher_me.bare_id();
@@ -108,9 +108,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     drop(peers_map_dispatcher);
 
     let fyxtez = client
-        .resolve_username("Fyxtez")
+        .resolve_username("fyxtez")
         .await?
-        .ok_or("Username Fyxtez not found")?;
+        .ok_or("Username fyxtez not found")?;
 
     let use_testnet = true;
 
@@ -169,6 +169,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(perp_kols::run(
         Arc::clone(&bus),
+        // TODO: change this to dispatcher after wolfy answers the bot problem.
         Arc::clone(&client),
         fyxtez,
         env::var("RS_USER_ID")?.parse::<i64>()?,

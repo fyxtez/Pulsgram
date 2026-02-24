@@ -747,9 +747,9 @@ dependencies = [
 
 [[package]]
 name = "grammers-tl-parser"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3949756519386578835cf5298befef465009accb0531d884eba6e2fc5ad8766e"
+checksum = "d3c01be87038dce51855b5037e7d341eb84146db713a1c4953a8415512d26477"
 dependencies = [
  "crc32fast",
 ]
@@ -1193,6 +1193,7 @@ dependencies = [
  "lazy_static",
  "publisher",
  "regex",
+ "telegram",
  "telegram_types",
 ]
 
@@ -2376,6 +2377,7 @@ dependencies = [
  "grammers-client",
  "grammers-mtsender",
  "grammers-session",
+ "grammers-tl-types",
  "publisher",
  "serde",
  "tokio",
