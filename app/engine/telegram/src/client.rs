@@ -104,22 +104,38 @@ pub async fn handle_updates(
 
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
-                if let Some(sender) = message.sender() {
-                    if sender.id().bare_id() == dispatcher_user_id {
-                        // Ignore dispatcher messages
-                        continue;
-                    }
-                } else {
-                    // Sender does not exist. Checking Peer.
-                    if let Ok(peer) = message.peer() {
-                        let peer_id = peer.id().bare_id();
-                        if peer_id == 3228445189 {
-                            // TODO: Temporary solution. This is the ID of Pulsgram Errors channel.
-                            // Peer is Pulsgram Errors channel. Ignoring to prevent loop.
-                            continue;
+                match message.sender() {
+                    Some(sender) => {
+                        match sender.id().bare_id() {
+                            id if id == dispatcher_user_id => {
+                                // Ignore dispatcher messages
+                                continue;
+                            }
+                            _ => {}
                         }
-                    } else {
-                        println!("No sender or peer information available for this message. {:?}",message);
+                    }
+                    None => {
+                        match message.peer() {
+                            Ok(peer) => {
+                                match peer.id().bare_id() {
+                                    3228445189 => {
+                                        // TODO: Temporary solution. This is the ID of Pulsgram Errors channel.
+                                        // Peer is Pulsgram Errors channel. Ignoring to prevent loop.
+                                        continue;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            Err(peer_ref) => {
+                                println!("TODO");
+                                // TODO: Dispatch peer Ref to a bus so someone else figures it out and maybe cache it localy.
+                                // let peer = client.resolve_peer(peer_ref).await;
+                                // println!(
+                                //     "No sender or peer information available for this message. {:?}",
+                                //     message
+                                // );
+                            }
+                        }
                     }
                 }
                 // TODO: Fastest handling of sniper is here.

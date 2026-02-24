@@ -15,8 +15,14 @@ pub fn extract_photo_url_from_raw(update: &tl::enums::Update) -> Option<String> 
     if let tl::enums::Update::NewMessage(u) = update {
         if let tl::enums::Message::Message(msg) = &u.message {
             if let Some(tl::enums::MessageMedia::WebPage(wp)) = &msg.media {
-                if let tl::enums::WebPage::Pending(pending) = &wp.webpage {
-                    return pending.url.clone();
+                match &wp.webpage {
+                    tl::enums::WebPage::Pending(pending) => {
+                        return pending.url.clone();
+                    }
+                    tl::enums::WebPage::Page(page) => {
+                        return Some(page.url.clone());
+                    }
+                    _ => {}
                 }
             }
         }
