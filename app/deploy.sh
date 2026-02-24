@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo ""; echo "❌ Deployment failed at line $LINENO"; exit 1' ERR
 
 # --------------------------
 # LOAD CONFIG FROM .env
@@ -14,6 +16,22 @@ set -a
 source .env
 set +a
 
+# --------------------------
+# VALIDATE REQUIRED VARS
+# --------------------------
+: "${REMOTE_USER:?Missing REMOTE_USER}"
+: "${REMOTE_HOST:?Missing REMOTE_HOST}"
+: "${SERVICE_NAME:?Missing SERVICE_NAME}"
+: "${LOCAL_FILE:?Missing LOCAL_FILE}"
+: "${REMOTE_PATH:?Missing REMOTE_PATH}"
+
+echo "Deploying to $REMOTE_HOST"
+read -p "Continue? (y/N): " CONFIRM
+
+if [[ "$CONFIRM" != "y" ]]; then
+    echo "Aborted."
+    exit 0
+fi
 
 # --------------------------
 # TEST STEP
@@ -21,10 +39,6 @@ set +a
 echo "Running Rust tests..."
 cargo test -- --nocapture --include-ignored # Can do this but only localy for now.
 
-if [ $? -ne 0 ]; then
-    echo "Tests failed. Aborting deployment."
-    exit 1
-fi
 echo "All tests passed."
 
 # --------------------------
@@ -33,25 +47,16 @@ echo "All tests passed."
 echo "Building Rust project with production features..."
 cargo build --release --features production
 
-if [ $? -ne 0 ]; then
-    echo "Build failed. Aborting deployment."
-    exit 1
-fi
 echo "Build succeeded."
 
 # --------------------------
 # DEPLOYMENT STEP
 # --------------------------
 echo "Stopping service before deploy..."
-ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl stop $SERVICE_NAME"
+ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl stop $SERVICE_NAME 2>/dev/null || true"
 
 echo "Copying binary to remote server..."
 scp "$LOCAL_FILE" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
-
-if [ $? -ne 0 ]; then
-    echo "SCP failed. Aborting deployment."
-    exit 1
-fi
 
 echo "Binary copied to $REMOTE_HOST:$REMOTE_PATH."
 
@@ -59,8 +64,13 @@ echo "Setting executable permissions on remote binary..."
 ssh "$REMOTE_USER@$REMOTE_HOST" "chmod +x $REMOTE_PATH"
 echo "Permissions set."
 
-echo "Creating systemd service file..."
-ssh "$REMOTE_USER@$REMOTE_HOST" "cat > /etc/systemd/system/$SERVICE_NAME.service << 'EOF'
+echo "Ensuring systemd service exists..."
+
+ssh "$REMOTE_USER@$REMOTE_HOST" "
+if [ ! -f /etc/systemd/system/$SERVICE_NAME.service ]; then
+    echo 'Creating systemd service...'
+
+    cat > /etc/systemd/system/$SERVICE_NAME.service << EOF
 [Unit]
 Description=Pulsgram Application
 After=network.target
@@ -72,23 +82,25 @@ WorkingDirectory=/root
 ExecStart=$REMOTE_PATH
 Restart=always
 RestartSec=5
-StandardOutput=append:/root/app.log
-StandardError=append:/root/app.log
 
-# Security and resource limits (optional but recommended)
+# Logging via journal (recommended)
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
 LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
+    systemctl daemon-reload
+    systemctl enable $SERVICE_NAME
+    echo 'Service created and enabled.'
+else
+    echo 'Service already exists. Skipping creation.'
+fi
 "
-echo "Systemd service file created."
-
-echo "Reloading systemd daemon..."
-ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl daemon-reload"
-
-echo "Enabling service to start on boot..."
-ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl enable $SERVICE_NAME"
 
 echo "Restarting service..."
 ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl restart $SERVICE_NAME"
@@ -97,28 +109,46 @@ echo "Service '$SERVICE_NAME' restarted."
 # --------------------------
 # HEALTH CHECK
 # --------------------------
-echo "Waiting for service to start..."
-sleep 3
 
-echo "Checking service status..."
-ssh "$REMOTE_USER@$REMOTE_HOST" "systemctl status $SERVICE_NAME --no-pager"
+echo "Waiting for service to become active..."
 
-echo ""
-echo "Pinging health endpoint..."
-PING_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "http://$REMOTE_HOST:8181/api/v1/ping")
-
-if [ "$PING_RESPONSE" = "200" ]; then
-    echo "Health check passed! (HTTP $PING_RESPONSE)"
-else
-    echo "Health check FAILED! (HTTP $PING_RESPONSE)"
-    echo ""
-    echo "Fetching last 30 lines of app log..."
-    ssh "$REMOTE_USER@$REMOTE_HOST" "tail -30 /root/app.log"
-    echo ""
-    echo "Deployment finished but service may not be healthy!"
+if ! ssh "$REMOTE_USER@$REMOTE_HOST" \
+    "systemctl is-active --quiet $SERVICE_NAME"; then
+    echo "Service is not active!"
+    ssh "$REMOTE_USER@$REMOTE_HOST" \
+        "systemctl status $SERVICE_NAME --no-pager"
     exit 1
 fi
 
+echo "Service is active."
+echo "Checking HTTP health endpoint..."
+
+HEALTH_OK=false
+
+for i in {1..10}; do
+    if curl -fs "http://$REMOTE_HOST:8181/api/v1/ping" >/dev/null 2>&1; then
+        HEALTH_OK=true
+        break
+    fi
+    sleep 2
+done
+
+if [ "$HEALTH_OK" != true ]; then
+    echo "Health check FAILED!"
+    echo ""
+    echo "Service status:"
+    ssh "$REMOTE_USER@$REMOTE_HOST" \
+        "systemctl status $SERVICE_NAME --no-pager"
+
+    echo ""
+    echo "Last 30 journal logs:"
+    ssh "$REMOTE_USER@$REMOTE_HOST" \
+        "journalctl -u $SERVICE_NAME -n 30 --no-pager"
+
+    exit 1
+fi
+
+echo "Health check passed! (HTTP 200)"
 echo ""
 echo "Deployment complete!"
 echo ""
