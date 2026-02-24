@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_dispatcher = Arc::new(client_dispatcher);
 
     let dispatcher_me = client_dispatcher.get_me().await?;
-    let dispatcher_id = dispatcher_me.bare_id();
+    let dispatcher_id = dispatcher_me.id().bare_id();
 
     let bus = Arc::new(publisher::new_event_bus());
 
@@ -65,8 +65,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(dialogs_data_from_dispatcher);
     }
 
-    let mut peers_map = build_peers_map_from_dialogs(&dialogs);
-    let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher);
+    let mut peers_map = build_peers_map_from_dialogs(&dialogs).await;
+    let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher).await;
 
     drop(dialogs);
     drop(dialogs_from_dispatcher);
@@ -107,11 +107,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     drop(peers_map);
     drop(peers_map_dispatcher);
 
-    let fyxtez = client
+    let fyxtez_peer = client
         .resolve_username("fyxtez")
         .await?
         .ok_or("Username fyxtez not found")?;
 
+    let fyxtez = fyxtez_peer
+        .to_ref()
+        .await
+        .ok_or("Could not convert fyxtez to PeerRef")?;
     let use_testnet = true;
 
     let (api_key_var, api_secret_var) = if use_testnet {

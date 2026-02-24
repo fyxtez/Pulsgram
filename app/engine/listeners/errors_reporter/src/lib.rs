@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use telegram_types::Client;
-use telegram_types::Peer;
+use telegram_types::PeerRef;
 
-pub async fn run(client: Arc<Client>, to_peer: Peer, bus: Arc<publisher::EventBus>) {
+pub async fn run(client: Arc<Client>, to_peer: PeerRef, bus: Arc<publisher::EventBus>) {
     let mut rx = bus.subscribe();
 
     while let Ok(event) = rx.recv().await {
@@ -14,6 +14,6 @@ pub async fn run(client: Arc<Client>, to_peer: Peer, bus: Arc<publisher::EventBu
 
         let message_text = error_message.text().to_string();
 
-        let _ = client.send_message(&to_peer, message_text).await; //TODO: Handle error
+        let _ = client.send_message(to_peer, message_text).await; //TODO: Handle error
     }
 }

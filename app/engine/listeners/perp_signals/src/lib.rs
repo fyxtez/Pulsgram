@@ -2,7 +2,8 @@ mod regex;
 
 use publisher::EventBus;
 use std::sync::Arc;
-use telegram_types::{Client, InputMessage, Peer};
+use telegram_types::{Client, InputMessage};
+use telegram_types::PeerRef;
 
 use crate::regex::{format_signal, parse_trading_signal, remove_emojis};
 
@@ -10,7 +11,7 @@ pub async fn run(
     bus: Arc<EventBus>,
     client_dispatcher: Arc<Client>,
     target_id: i64,
-    signals: Peer,
+    signals: PeerRef,
 ) {
     println!("Perp Signals running...");
     let mut rx = bus.subscribe();
@@ -37,7 +38,7 @@ pub async fn run(
         // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
         // novi listener ce da slusa na taj novi event i radi sta trijeba.
         match client_dispatcher
-            .send_message(&signals, input_message)
+            .send_message(signals, input_message)
             .await
         {
             Ok(_) => {}

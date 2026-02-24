@@ -1,4 +1,4 @@
-use grammers_client::{Client, types::Photo};
+use grammers_client::{Client, media::Photo};
 use grammers_tl_types as tl;
 
 pub async fn save_photo(
@@ -45,6 +45,8 @@ mod tests {
                 silent: false,
                 post: false,
                 from_scheduled: false,
+                                schedule_repeat_period: None,
+                summary_from_language: None,
                 legacy: false,
                 edit_hide: false,
                 pinned: false,
@@ -119,6 +121,8 @@ mod tests {
                 mentioned: false,
                 media_unread: false,
                 silent: false,
+                schedule_repeat_period: None,
+                summary_from_language: None,
                 post: false,
                 from_scheduled: false,
                 legacy: false,

@@ -5,16 +5,11 @@ use std::{
 };
 
 use crate::config::load_tg_client_config;
-use grammers_client::{
-    InvocationError, SignInError, UpdatesConfiguration,
-    grammers_tl_types::{
-        self,
-        enums::{InputNotifyPeer, InputPeer},
-    },
-};
-use grammers_client::{Update, types::Peer};
+use grammers_client::{InvocationError, SignInError, client::UpdatesConfiguration};
+use grammers_client::{peer::Peer, update::Update};
 use grammers_mtsender::SenderPool;
-use grammers_session::{defs::PeerRef, storages::SqliteSession, updates::UpdatesLike};
+use grammers_session::{storages::SqliteSession, updates::UpdatesLike};
+use grammers_tl_types::enums::{InputNotifyPeer, InputPeer};
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use grammers_client::Client;
@@ -23,9 +18,9 @@ pub struct ConnectClientReturnType {
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
 }
 
-fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, Box<dyn Error>> {
+async fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, Box<dyn Error>> {
     Ok(SenderPool::new(
-        Arc::new(SqliteSession::open(session_path)?),
+        Arc::new(SqliteSession::open(session_path).await?),
         api_id,
     ))
 }
@@ -39,9 +34,9 @@ pub async fn connect_client(
 ) -> Result<ConnectClientReturnType, Box<dyn Error>> {
     let config = load_tg_client_config(api_id_var, api_hash_var, phone_number_var, password_var)?;
 
-    let sender_pool = create_sender_pool(session_path, config.api_id)?;
+    let sender_pool = create_sender_pool(session_path, config.api_id).await?;
 
-    let client = Client::new(&sender_pool);
+    let client = Client::new(sender_pool.handle);
 
     tokio::spawn(sender_pool.runner.run());
 
@@ -82,13 +77,15 @@ pub async fn handle_updates(
     event_bus: Arc<publisher::EventBus>,
     dispatcher_user_id: i64,
 ) {
-    let mut updates = client.stream_updates(
-        updates_receiver,
-        UpdatesConfiguration {
-            catch_up: false,
-            ..Default::default()
-        },
-    );
+    let mut updates = client
+        .stream_updates(
+            updates_receiver,
+            UpdatesConfiguration {
+                catch_up: false,
+                ..Default::default()
+            },
+        )
+        .await;
 
     println!("Updates handler spawned.");
 
@@ -116,9 +113,10 @@ pub async fn handle_updates(
                     }
                     None => {
                         match message.peer() {
-                            Ok(peer) => {
+                            Some(peer) => {
                                 match peer.id().bare_id() {
                                     3228445189 => {
+                                        dbg!("TODO");
                                         // TODO: Temporary solution. This is the ID of Pulsgram Errors channel.
                                         // Peer is Pulsgram Errors channel. Ignoring to prevent loop.
                                         continue;
@@ -126,14 +124,11 @@ pub async fn handle_updates(
                                     _ => {}
                                 }
                             }
-                            Err(peer_ref) => {
-                                println!("TODO");
-                                // TODO: Dispatch peer Ref to a bus so someone else figures it out and maybe cache it localy.
-                                // let peer = client.resolve_peer(peer_ref).await;
-                                // println!(
-                                //     "No sender or peer information available for this message. {:?}",
-                                //     message
-                                // );
+                            None => {
+                                println!(
+                                    "No sender or peer information available for this message. {:?}",
+                                    message
+                                );
                             }
                         }
                     }
@@ -151,12 +146,16 @@ pub async fn handle_updates(
     }
 }
 
+//TODO: Test this v0.9.0 update.
 pub async fn toggle_mute_peer(
     client: Arc<Client>,
     peer: &Peer,
     mute: bool,
 ) -> Result<(), InvocationError> {
-    let peer_ref = PeerRef::from(peer);
+    let peer_ref = peer.to_ref().await.ok_or_else(|| {
+        eprintln!("❌ Failed to resolve PeerRef for peer: {:?}", peer);
+        InvocationError::Dropped
+    })?;
     let input_peer: InputPeer = peer_ref.into();
 
     let notify_peer =

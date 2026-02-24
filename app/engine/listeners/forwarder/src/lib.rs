@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use telegram_types::Client;
-use telegram_types::Peer;
+use telegram_types::PeerRef;
 
 pub async fn run(
     client: Arc<Client>,
-    from_peer: Peer,
-    to_peer: Peer,
+    from_peer: PeerRef,
+    to_peer: PeerRef,
     bus: Arc<publisher::EventBus>,
 ) {
     let mut rx = bus.subscribe();
@@ -15,7 +15,7 @@ pub async fn run(
         let message = event.message;
         let message_peer_id = message.peer_id();
 
-        if message_peer_id != from_peer.id() {
+        if message_peer_id != from_peer.id {
             continue;
         }
 
@@ -26,6 +26,6 @@ pub async fn run(
         }
 
         //TODO: Add message sender/peer who sent the message.
-        let _ = client.send_message(&to_peer, message_text).await; //TODO: Handle error
+        let _ = client.send_message(to_peer, message_text).await; //TODO: Handle error
     }
 }

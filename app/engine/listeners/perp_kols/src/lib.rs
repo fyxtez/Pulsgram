@@ -1,13 +1,14 @@
 use publisher::EventBus;
 use std::sync::Arc;
-use telegram_types::{Client, Peer};
+use telegram_types::Client;
+use telegram_types::PeerRef;
 
 pub async fn run(
     bus: Arc<EventBus>,
     client: Arc<Client>,
-    fyxtez: Peer,
+    fyxtez: PeerRef,
     from_target_id: i64,
-    perp_kols_peer: Peer,
+    perp_kols_peer: PeerRef,
     target_kols: Vec<String>,
 ) {
     println!("KOL Perp Signals running...");
@@ -40,7 +41,7 @@ pub async fn run(
         }
 
         match client
-            .forward_messages(&perp_kols_peer, &[message.id()], &fyxtez)
+            .forward_messages(perp_kols_peer, &[message.id()], fyxtez)
             .await
         {
             Ok(_) => {}

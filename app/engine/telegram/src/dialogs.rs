@@ -4,8 +4,9 @@ use std::sync::Arc;
 
 use grammers_client::Client;
 use grammers_client::InvocationError;
-use grammers_client::types::Dialog;
-use grammers_client::types::Peer;
+use grammers_client::peer::Dialog;
+use grammers_client::peer::Peer;
+use grammers_session::types::PeerRef;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq)]
@@ -60,6 +61,8 @@ pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationErro
     Ok(dialogs)
 }
 
+//TODO: Seems bare_id is fixed. Recheck if this can be better written
+
 pub async fn get_peer_by_bare_id(
     client: &Client,
     bare_id_to_find: i64,
@@ -68,9 +71,9 @@ pub async fn get_peer_by_bare_id(
 
     while let Some(dialog) = iter_dialogs.next().await? {
         let dialog_bare_id = match &dialog.peer {
-            Peer::User(user) => user.bare_id(),
+            Peer::User(user) => user.id().bare_id(),
             Peer::Group(group) => group.id().bare_id(),
-            Peer::Channel(channel) => channel.bare_id(),
+            Peer::Channel(channel) => channel.id().bare_id(),
         };
 
         if dialog_bare_id == bare_id_to_find {
@@ -81,23 +84,26 @@ pub async fn get_peer_by_bare_id(
     Ok(None)
 }
 
-pub fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, Peer> {
+pub async fn build_peers_map_from_dialogs(
+    dialogs: &[Dialog],
+) -> HashMap<i64, PeerRef> {
     let mut map = HashMap::new();
 
     for dialog in dialogs {
-        let bare_id = match &dialog.peer {
-            Peer::User(user) => user.bare_id(),
-            Peer::Group(group) => group.id().bare_id(),
-            Peer::Channel(channel) => channel.bare_id(),
-        };
-        map.insert(bare_id, dialog.peer.clone());
+        let peer = dialog.peer();
+        let bare_id = peer.id().bare_id();
+
+        if let Some(peer_ref) = peer.to_ref().await {
+            map.insert(bare_id, peer_ref);
+        } else {
+            eprintln!("❌ Failed to resolve peer {}", bare_id);
+        }
     }
 
-    println!("Peers map loaded.");
+    println!("Peers map loaded (PeerRef).");
 
     map
 }
-
 pub async fn get_peers_by_bare_ids(
     client: &Client,
     bare_ids: Vec<i64>,
@@ -111,9 +117,9 @@ pub async fn get_peers_by_bare_ids(
         let peer = dialog.peer;
 
         let bare_id = match &peer {
-            Peer::User(user) => user.bare_id(),
+            Peer::User(user) => user.id().bare_id(),
             Peer::Group(group) => group.id().bare_id(),
-            Peer::Channel(channel) => channel.bare_id(),
+            Peer::Channel(channel) => channel.id().bare_id(),
         };
 
         if wanted.contains(&bare_id) {
@@ -144,9 +150,9 @@ pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
         let peer = dialog.peer();
 
         let (id, name) = match peer {
-            Peer::User(user) => (user.bare_id(), user.username().unwrap_or("No username")),
+            Peer::User(user) => (user.id().bare_id(), user.username().unwrap_or("No username")),
             Peer::Group(group) => (group.id().bare_id(), group.title().unwrap_or("No title")),
-            Peer::Channel(channel) => (channel.bare_id(), channel.title()),
+            Peer::Channel(channel) => (channel.id().bare_id(), channel.title()),
         };
 
         println!("Dialog ID: {}, Name: {}, Type: {:?}", id, name, dialog_type);
@@ -160,7 +166,7 @@ pub fn print_peer_data(peer: &Peer) {
         Peer::User(user) => {
             println!(
                 "User Peer - ID: {}, Username: {:?}",
-                user.bare_id(),
+                user.id().bare_id(),
                 user.username()
             );
         }
@@ -174,7 +180,7 @@ pub fn print_peer_data(peer: &Peer) {
         Peer::Channel(channel) => {
             println!(
                 "Channel Peer - ID: {}, Title: {:?}",
-                channel.bare_id(),
+                channel.id().bare_id(),
                 channel.title()
             );
         }
@@ -184,7 +190,7 @@ pub fn print_peer_data(peer: &Peer) {
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     match peer {
         Peer::User(user) => {
-            let id = user.bare_id();
+            let id = user.id().bare_id();
 
             let data = DialogData {
                 name: user.first_name().unwrap_or("Unnamed user").to_string(),
@@ -210,7 +216,7 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
         }
 
         Peer::Channel(channel) => {
-            let id = channel.bare_id();
+            let id = channel.id().bare_id();
 
             let data = DialogData {
                 name: channel.title().to_string(),

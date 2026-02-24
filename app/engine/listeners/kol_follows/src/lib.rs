@@ -4,12 +4,13 @@ use publisher::EventBus;
 use regex::Regex;
 use std::sync::{Arc, OnceLock};
 use telegram::media::extract_photo_url_from_raw;
-use telegram_types::{Client, Message, Peer};
+use telegram_types::PeerRef;
+use telegram_types::{Client, Message};
 
 pub async fn run(
     bus: Arc<EventBus>,
     target_dialog_id: i64,
-    destination: Peer,
+    destination: PeerRef,
     dispatcher: Arc<Client>,
 ) {
     println!("KOL Follows running...");
@@ -24,37 +25,49 @@ pub async fn run(
             continue;
         }
 
-        handle_follow(message, &dispatcher, &destination).await;
+        handle_follow(message, &dispatcher, destination).await;
     }
 }
 
-pub async fn handle_follow(message: Message, dispatcher: &Client, destination: &Peer) {
+pub async fn handle_follow(message: Message, dispatcher: &Client, destination: PeerRef) {
     if !simple_is_followed_check(message.text()) {
         return;
     }
 
     let html_content = postprocess_html(&remove_emojis(&message.html_text()));
-    let mut html_with_preview:Option<String> = None;
+    let mut html_with_preview: Option<String> = None;
 
-    
     if let Some(photo_url) = extract_photo_url_from_raw(&message.raw) {
-        html_with_preview = Some(format!("<a href=\"{}\">&#8205;</a>{}", photo_url, html_content));
+        html_with_preview = Some(format!(
+            "<a href=\"{}\">&#8205;</a>{}",
+            photo_url, html_content
+        ));
     }
-    
-    let final_html = html_with_preview.unwrap_or(html_content);
-    
-    if message.text().contains("diloytte") {
-        let input_message = telegram_types::InputMessage::new().html(final_html).link_preview(true).invert_media(true);
 
-        let result = dispatcher.send_message(destination, input_message).await;
-        if result.is_err() {
-            dbg!(result.err());
+    let final_html = html_with_preview.unwrap_or(html_content);
+
+    if message.text().contains("diloytte") {
+        let is_production = cfg!(feature = "production");
+
+        if !is_production {
+            let input_message = telegram_types::InputMessage::new()
+                .html(final_html)
+                .link_preview(true)
+                .invert_media(true);
+
+            let result = dispatcher.send_message(destination, input_message).await;
+            if result.is_err() {
+                dbg!(result.err());
+            }
+            return;
         }
-        return;
     }
 
     if cfg!(feature = "production") {
-        let input_message = telegram_types::InputMessage::new().html(final_html).link_preview(true).invert_media(true);
+        let input_message = telegram_types::InputMessage::new()
+            .html(final_html)
+            .link_preview(true)
+            .invert_media(true);
         if let Err(err) = dispatcher.send_message(destination, input_message).await {
             eprintln!("Failed to send message: {:?}", err);
         }

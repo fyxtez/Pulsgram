@@ -5,12 +5,13 @@ use blockchains_address_extractor::extract_token_address_from_message_text;
 use publisher::EventBus;
 use telegram_types::Client;
 use telegram_types::Peer;
+use telegram_types::PeerRef;
 
 // TODO: Ignored senders implementation
 pub async fn run(
     bus: Arc<EventBus>,
     client: Arc<Client>,
-    forwarding_peer: Peer,
+    forwarding_peer: PeerRef,
     _ignored_senders: HashSet<&'static str>,
     _ignored_peers: HashSet<&Peer>,
 ) {
@@ -35,7 +36,7 @@ pub async fn run(
         if let Some(address) = address {
             let _ = client
                 .send_message(
-                    &forwarding_peer,
+                    forwarding_peer,
                     format!(
                         "Got CA: \n\n{}\n\n from name: {}\n username: {} \n Blockchain: {:?}",
                         address, sender_name, sender_username, blockchain
