@@ -1,17 +1,12 @@
 use axum::{Router, routing::get};
 
-use crate::api::routes::{cors::build_cors_layer, ping::ping};
+use crate::api::routes::ping::ping;
 
 pub mod cors;
+pub mod middlewares;
 mod ping;
 
-pub fn build_router() -> Router {
-    Router::new()
-        .nest("/persistance", routes())
-        .layer(build_cors_layer())
-}
-
-fn routes() -> Router {
+pub fn routes() -> Router {
     Router::new().merge(_routes())
 }
 

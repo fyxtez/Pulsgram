@@ -1,23 +1,31 @@
 use serde_json::json;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::time::Duration;
+use tokio::time::timeout;
+use sqlx::Error;
+use axum::{response::{IntoResponse, Response}, http::StatusCode};
 
 use crate::chats;
 
-pub async fn connect(database_url: &str) -> PgPool {
+pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
     PgPoolOptions::new()
         .max_connections(20)
         .min_connections(2)
-        .acquire_timeout(Duration::from_secs(10))
-        .idle_timeout(Duration::from_secs(600))
-        .max_lifetime(Duration::from_secs(1800))
+        .acquire_timeout(Duration::from_secs(3))
+        .idle_timeout(Duration::from_secs(300))
+        .max_lifetime(Duration::from_secs(900))
         .connect(database_url)
         .await
-        .expect("Failed to connect to Postgres")
 }
 
+// TODO: This is a health for db. Make sure u have health for api as well.
 pub async fn health_check(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT 1").execute(pool).await?;
+    timeout(
+        Duration::from_secs(2),
+        sqlx::query("SELECT 1").execute(pool),
+    )
+    .await
+    .map_err(|_| sqlx::Error::PoolTimedOut)??;
 
     Ok(())
 }
@@ -27,6 +35,35 @@ pub async fn run(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     println!("Migrations ran successfully!");
     Ok(())
+}
+
+// TODO:
+// match some_db_call.await {
+//     Ok(val) => Ok(Json(val)),
+//     Err(err) => Err(map_db_error(err)),
+// }
+pub fn map_db_error(err: Error) -> Response {
+    println!("DB Error: {}", err);
+
+    match err {
+        Error::RowNotFound => (
+            StatusCode::NOT_FOUND,
+            "Resource not found",
+        )
+            .into_response(),
+
+        Error::Database(db_err) if db_err.code() == Some("23505".into()) => (
+            StatusCode::CONFLICT,
+            "Duplicate entry",
+        )
+            .into_response(),
+
+        _ => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error",
+        )
+            .into_response(),
+    }
 }
 
 // TODO: This approach (JSON dump/restore) is a quick solution but not production-grade.

@@ -1,6 +1,8 @@
 mod api;
 mod db;
 mod queries;
+mod utils;
+
 use crate::db::{connect, health_check, run};
 pub use queries::chats;
 
@@ -10,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let pool = connect(&database_url).await;
+    let pool = connect(&database_url).await?;
 
     println!("Connected to database!");
 
@@ -19,6 +21,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     run(&pool).await?;
 
     api::start_api_server("127.0.0.1", 8180).await?;
+
+    println!("Server stopped accepting new connections.");
+
+    pool.close().await;
+
+    println!("Database pool closed.");
 
     Ok(())
 }
