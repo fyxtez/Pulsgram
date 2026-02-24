@@ -47,20 +47,20 @@ pub async fn handle_follow(message: Message, dispatcher: &Client, destination: P
     let final_html = html_with_preview.unwrap_or(html_content);
 
     if message.text().contains("diloytte") {
-        let is_production = cfg!(feature = "production");
-
-        if !is_production {
-            let input_message = telegram_types::InputMessage::new()
-                .html(final_html)
-                .link_preview(true)
-                .invert_media(true);
-
-            let result = dispatcher.send_message(destination, input_message).await;
-            if result.is_err() {
-                dbg!(result.err());
-            }
+        if cfg!(feature = "production") {
             return;
         }
+
+        let input_message = telegram_types::InputMessage::new()
+            .html(final_html)
+            .link_preview(true)
+            .invert_media(true);
+
+        let result = dispatcher.send_message(destination, input_message).await;
+        if result.is_err() {
+            dbg!(result.err());
+        }
+        return;
     }
 
     if cfg!(feature = "production") {
