@@ -34,7 +34,7 @@ pub async fn send_signed_request(
     api_key: &str,
     api_secret: &str,
     mut query_string: String,
-) -> Result<String,BinanceError> {
+) -> Result<String, BinanceError> {
     let timestamp = get_timestamp();
 
     if !query_string.is_empty() {

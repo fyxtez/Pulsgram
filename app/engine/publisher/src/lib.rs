@@ -11,6 +11,7 @@ pub struct EventBus {
 }
 impl EventBus {
     pub fn publish(&self, event: PulsgramEvent) {
+        //TODO: Handle error maybe?
         let _ = self.sender.send(event);
     }
 
@@ -24,15 +25,9 @@ pub fn new_event_bus() -> EventBus {
     EventBus { sender }
 }
 
-pub fn handle_recv_error(
-    source: &'static str,
-    error: RecvError,
-    bus: &EventBus,
-) -> bool {
+pub fn handle_recv_error(source: &'static str, error: RecvError, bus: &EventBus) -> bool {
     let msg = match error {
-        RecvError::Closed => {
-            "Broadcast channel closed".to_string()
-        }
+        RecvError::Closed => "Broadcast channel closed".to_string(),
         RecvError::Lagged(n) => {
             format!("Broadcast lagged by {} messages", n)
         }
@@ -40,14 +35,10 @@ pub fn handle_recv_error(
 
     // Intentionally ignore publish result.
     // If the error bus is unavailable, there is no recovery path here.
-    let _ = bus.publish(
-        types::PulsgramEvent::Error(
-            types::ErrorEvent {
-                message_text: msg,
-                source,
-            },
-        )
-    );
+    let _ = bus.publish(types::PulsgramEvent::Error(types::ErrorEvent {
+        message_text: msg,
+        source,
+    }));
 
     matches!(error, RecvError::Closed)
 }

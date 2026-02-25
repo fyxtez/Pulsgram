@@ -1,6 +1,6 @@
 mod error;
-use std::sync::Arc;
 use publisher::handle_recv_error;
+use std::sync::Arc;
 use telegram_types::Client;
 use telegram_types::PeerRef;
 

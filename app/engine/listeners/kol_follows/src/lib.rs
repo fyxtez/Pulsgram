@@ -28,7 +28,7 @@ pub async fn run(
                         continue;
                     }
 
-                    handle_follow(message, &dispatcher, destination,&bus).await;
+                    handle_follow(message, &dispatcher, destination, &bus).await;
                 }
                 _ => continue,
             },
@@ -51,16 +51,10 @@ pub async fn handle_follow(
         return;
     }
 
-    let html_content =
-        postprocess_html(&remove_emojis(&message.html_text()));
+    let html_content = postprocess_html(&remove_emojis(&message.html_text()));
 
-    let final_html = if let Some(photo_url) =
-        extract_photo_url_from_raw(&message.raw)
-    {
-        format!(
-            "<a href=\"{}\">&#8205;</a>{}",
-            photo_url, html_content
-        )
+    let final_html = if let Some(photo_url) = extract_photo_url_from_raw(&message.raw) {
+        format!("<a href=\"{}\">&#8205;</a>{}", photo_url, html_content)
     } else {
         html_content
     };
@@ -76,18 +70,15 @@ pub async fn handle_follow(
             .link_preview(true)
             .invert_media(true);
 
-        if let Err(error) =
-            dispatcher.send_message(destination, input_message).await
-        {
+        if let Err(error) = dispatcher.send_message(destination, input_message).await {
             let msg = format!(
                 "KOL Follows failed (test mode).\nDestination: {}\nError: {}",
-                destination.id,
-                error
+                destination.id, error
             );
 
             // We intentionally ignore publish() result.
             // This worker must not panic or block if error reporting fails.
-            let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+            bus.publish(PulsgramEvent::Error(ErrorEvent {
                 message_text: msg,
                 source: "KOL Follows::SendMessage(Test)",
             }));
@@ -103,16 +94,13 @@ pub async fn handle_follow(
             .link_preview(true)
             .invert_media(true);
 
-        if let Err(error) =
-            dispatcher.send_message(destination, input_message).await
-        {
+        if let Err(error) = dispatcher.send_message(destination, input_message).await {
             let msg = format!(
                 "KOL Follows failed.\nDestination: {}\nError: {}",
-                destination.id,
-                error
+                destination.id, error
             );
 
-            let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+            bus.publish(PulsgramEvent::Error(ErrorEvent {
                 message_text: msg,
                 source: "KOL Follows::SendMessage",
             }));

@@ -42,7 +42,7 @@ pub async fn run(
                             // can safely do about it. Forwarder must not panic or block on error reporting.
                             // The dedicated error listener is responsible for handling reporting failures.
 
-                            let _ = bus.publish(publisher::types::PulsgramEvent::Error(
+                            bus.publish(publisher::types::PulsgramEvent::Error(
                                 publisher::types::ErrorEvent {
                                     message_text: msg,
                                     source: "Forwarder::Err",

@@ -45,9 +45,7 @@ pub async fn run(
                     {
                         let msg = format!(
                             "Perp KOL forward failed.\nFrom Target: {}\nTo Peer: {}\nError: {}",
-                            from_target_id,
-                            perp_kols_peer.id,
-                            error
+                            from_target_id, perp_kols_peer.id, error
                         );
 
                         // This worker must not panic if error reporting fails.

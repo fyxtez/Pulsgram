@@ -74,4 +74,3 @@ impl From<grammers_client::SignInError> for TelegramError {
         TelegramError::SignIn(err)
     }
 }
-

@@ -26,40 +26,28 @@ pub async fn run(
                         continue;
                     }
 
-                    let message_cleaned_up =
-                        remove_emojis(message.text());
+                    let message_cleaned_up = remove_emojis(message.text());
 
-                    let Some(signal) =
-                        parse_trading_signal(&message_cleaned_up)
-                    else {
+                    let Some(signal) = parse_trading_signal(&message_cleaned_up) else {
                         continue;
                     };
 
-                    let formatted_signal =
-                        format_signal(&signal);
+                    let formatted_signal = format_signal(&signal);
 
-                    let input_message =
-                        InputMessage::new().html(formatted_signal);
+                    let input_message = InputMessage::new().html(formatted_signal);
 
-                    if let Err(error) =
-                        client_dispatcher
-                            .send_message(signals, input_message)
-                            .await
+                    if let Err(error) = client_dispatcher.send_message(signals, input_message).await
                     {
                         let msg = format!(
                             "Perp Signals failed.\nTarget: {}\nSignals Peer: {}\nError: {}",
-                            target_id,
-                            signals.id,
-                            error
+                            target_id, signals.id, error
                         );
 
                         // We intentionally ignore publish result.
-                        let _ = bus.publish(
-                            PulsgramEvent::Error(ErrorEvent {
-                                message_text: msg,
-                                source: "PerpSignals::SendMessage",
-                            }),
-                        );
+                        let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+                            message_text: msg,
+                            source: "PerpSignals::SendMessage",
+                        }));
                     }
                 }
                 _ => {}

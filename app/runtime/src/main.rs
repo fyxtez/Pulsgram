@@ -6,7 +6,8 @@ use api::start_api_server;
 use std::sync::Arc;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data}, errors::TelegramError,
+    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
+    errors::TelegramError,
 };
 
 use crate::{config::Config, error::AppError, utils::create_reqwest_client};
@@ -27,7 +28,6 @@ async fn main() -> Result<(), AppError> {
     )
     .await?;
 
-
     let ConnectClientReturnType {
         client: client_dispatcher,
         updates_receiver: _,
@@ -45,9 +45,8 @@ async fn main() -> Result<(), AppError> {
 
     let dispatcher_me = telegram::get_me(&client_dispatcher).await?;
     let dispatcher_id = dispatcher_me.id().bare_id();
-    
+
     let bus = Arc::new(publisher::new_event_bus());
-    
 
     tokio::spawn(handle_updates(
         Arc::clone(&client),
@@ -107,12 +106,13 @@ async fn main() -> Result<(), AppError> {
     drop(peers_map);
     drop(peers_map_dispatcher);
 
-
     let fyxtez_peer_ref = telegram::resolve_username(&client, "fyxtez")
         .await?
         .to_ref()
         .await
-        .ok_or(AppError::Telegram(TelegramError::Other(String::from("Could not convert to PeerRef"))))?;
+        .ok_or(AppError::Telegram(Box::new(TelegramError::Other(String::from(
+            "Could not convert to PeerRef",
+        )))))?;
 
     let reqwest_client = create_reqwest_client()?;
 

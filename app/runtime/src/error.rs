@@ -8,7 +8,7 @@ use telegram::errors::TelegramError;
 #[derive(Debug)]
 pub enum AppError {
     Config(VarError),
-    Telegram(TelegramError),
+    Telegram(Box<TelegramError>),
     Binance(BinanceError),
     Io(std::io::Error),
     Reqwest(reqwest::Error),
@@ -51,7 +51,7 @@ impl From<reqwest::Error> for AppError {
 
 impl From<TelegramError> for AppError {
     fn from(err: TelegramError) -> Self {
-        AppError::Telegram(err)
+        AppError::Telegram(Box::new(err))
     }
 }
 

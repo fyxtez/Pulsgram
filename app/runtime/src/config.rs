@@ -1,5 +1,5 @@
-use std::env;
 use dotenv::dotenv;
+use std::env;
 
 use crate::error::AppError;
 
@@ -19,7 +19,6 @@ pub struct Config {
     pub binance_api_secret: String,
 }
 
-
 fn required_env_string(key: &str) -> Result<String, AppError> {
     Ok(env::var(key)?)
 }
@@ -31,7 +30,7 @@ fn required_env_i64(key: &str) -> Result<i64, AppError> {
 }
 
 impl Config {
-    pub fn from_env(use_binance_testnet:bool) -> Result<Self, AppError> {
+    pub fn from_env(use_binance_testnet: bool) -> Result<Self, AppError> {
         dotenv().ok();
 
         let (api_key_var, api_secret_var) = if use_binance_testnet {
