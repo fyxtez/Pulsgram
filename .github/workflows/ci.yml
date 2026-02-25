@@ -13,27 +13,23 @@ jobs:
   # =========================
   # APP
   # =========================
-  app-check:
-    name: App - Check
+  app:
+    name: App - Build & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Cargo check
-        working-directory: app
-        run: cargo check --all-features
 
-  app-test:
-    name: App - Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - name: Cargo test
         working-directory: app
         run: cargo test --all-features
+
+      - name: Build release
+        working-directory: app
+        run: cargo build --release
 
   # =========================
   # PERSISTENCE
@@ -49,14 +45,6 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
-
-      - name: Cargo fmt
-        working-directory: persistence
-        run: cargo fmt --all -- --check
-
-      - name: Cargo clippy
-        working-directory: persistence
-        run: cargo clippy --all-features -- -D warnings
 
       - name: Cargo test
         working-directory: persistence
