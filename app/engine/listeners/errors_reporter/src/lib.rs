@@ -5,6 +5,7 @@ use telegram_types::Client;
 use telegram_types::PeerRef;
 
 pub async fn run(client: Arc<Client>, to_peer: PeerRef, bus: Arc<publisher::EventBus>) {
+    println!("Errors Reporter running...");
     let mut rx = bus.subscribe();
 
     loop {
