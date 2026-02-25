@@ -4,8 +4,8 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use uuid::Uuid;
 use std::time::{Duration, Instant};
+use uuid::Uuid;
 
 use axum::extract::Request;
 
@@ -41,10 +41,9 @@ pub async fn request_id_middleware(req: Request, next: Next) -> Response {
     println!("incoming request; request_id={}", request_id);
     let mut response = next.run(req).await;
 
-    response.headers_mut().insert(
-        "x-request-id",
-        request_id.to_string().parse().unwrap(),
-    );
+    response
+        .headers_mut()
+        .insert("x-request-id", request_id.to_string().parse().unwrap());
 
     response
 }
