@@ -16,32 +16,43 @@ pub async fn run(
     println!("Perp Signals running...");
     let mut rx = bus.subscribe();
 
-    while let Ok(event) = rx.recv().await {
-        let message = event.message;
+    loop {
+        match rx.recv().await {
+            Ok(event) => match event {
+                publisher::types::PulsgramEvent::Telegram(event) => {
+                    let message = event.message;
 
-        let message_peer_id = message.peer_id();
+                    let message_peer_id = message.peer_id();
 
-        if message_peer_id.bare_id() != target_id {
-            continue;
-        }
+                    if message_peer_id.bare_id() != target_id {
+                        continue;
+                    }
 
-        let message_cleaned_up = remove_emojis(message.text());
+                    let message_cleaned_up = remove_emojis(message.text());
 
-        let Some(signal) = parse_trading_signal(&message_cleaned_up) else {
-            continue;
-        };
+                    let Some(signal) = parse_trading_signal(&message_cleaned_up) else {
+                        continue;
+                    };
 
-        let formatted_signal = format_signal(&signal);
+                    let formatted_signal = format_signal(&signal);
 
-        let input_message = InputMessage::new().html(formatted_signal);
+                    let input_message = InputMessage::new().html(formatted_signal);
 
-        // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
-        // novi listener ce da slusa na taj novi event i radi sta trijeba.
-        match client_dispatcher.send_message(signals, input_message).await {
-            Ok(_) => {}
-            Err(err) => {
-                println!("{:?}", message.text());
-                println!("{:?}", err);
+                    // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
+                    // novi listener ce da slusa na taj novi event i radi sta trijeba.
+                    match client_dispatcher.send_message(signals, input_message).await {
+                        Ok(_) => {}
+                        Err(err) => {
+                            println!("{:?}", message.text());
+                            println!("{:?}", err);
+                        }
+                    }
+                }
+                _ => continue,
+            },
+            Err(error) => {
+                println!("Error receiving event: {:?}", error);
+                continue;
             }
         }
     }

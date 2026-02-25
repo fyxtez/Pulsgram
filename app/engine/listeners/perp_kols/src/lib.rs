@@ -20,34 +20,40 @@ pub async fn run(
         .map(|kol| kol.to_lowercase())
         .collect();
 
-    while let Ok(event) = rx.recv().await {
-        let message = event.message;
+    loop {
+        match rx.recv().await {
+            Ok(event) => match event {
+                publisher::types::PulsgramEvent::Telegram(tg_event) => {
+                    let message = tg_event.message;
 
-        let message_peer_id = message.peer_id();
+                    if message.peer_id().bare_id() != from_target_id {
+                        continue;
+                    }
 
-        if message_peer_id.bare_id() != from_target_id {
-            continue;
-        }
+                    let message_text_lower = message.text().to_lowercase();
 
-        let message_text = message.text();
-        let message_text_lower = message_text.to_lowercase(); // ✅ once per message
+                    if !target_kols_lowercase
+                        .iter()
+                        .any(|kol| message_text_lower.contains(kol))
+                    {
+                        continue;
+                    }
 
-        // Check if any target KOL is mentioned
-        if !target_kols_lowercase
-            .iter()
-            .any(|kol| message_text_lower.contains(kol))
-        {
-            continue;
-        }
-
-        match client
-            .forward_messages(perp_kols_peer, &[message.id()], fyxtez)
-            .await
-        {
-            Ok(_) => {}
-            Err(err) => {
-                println!("{:?}", message.text());
-                println!("{:?}", err);
+                    if let Err(err) = client
+                        .forward_messages(perp_kols_peer, &[message.id()], fyxtez)
+                        .await
+                    {
+                        println!("{:?}", message.text());
+                        println!("{:?}", err);
+                    }
+                }
+                _ => {
+                    continue;
+                }
+            },
+            Err(error) => {
+                println!("Error receiving event: {:?}", error);
+                continue;
             }
         }
     }

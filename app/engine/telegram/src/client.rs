@@ -101,45 +101,25 @@ pub async fn handle_updates(
 
         match update {
             Update::NewMessage(message) if !message.outgoing() => {
-                match message.sender() {
-                    Some(sender) => {
-                        match sender.id().bare_id() {
-                            id if id == dispatcher_user_id => {
-                                // Ignore dispatcher messages
-                                continue;
-                            }
-                            _ => {}
-                        }
-                    }
-                    None => {
-                        match message.peer() {
-                            Some(peer) => {
-                                match peer.id().bare_id() {
-                                    3228445189 => {
-                                        dbg!("TODO");
-                                        // TODO: Temporary solution. This is the ID of Pulsgram Errors channel.
-                                        // Peer is Pulsgram Errors channel. Ignoring to prevent loop.
-                                        continue;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                            None => {
-                                println!(
-                                    "No sender or peer information available for this message. {:?}",
-                                    message
-                                );
-                            }
-                        }
-                    }
-                }
-                // TODO: Fastest handling of sniper is here.
+                let peer_id = message.peer_id().bare_id();
 
-                publisher::broadcast(
-                    event_bus.clone(),
-                    message,
-                    publisher::types::EventTag::Other,
-                );
+                if let Some(sender) = message.sender()
+                    && sender.id().bare_id() == dispatcher_user_id
+                {
+                    continue;
+                }
+
+                // Ignore Pulsgram Errors channel
+                if peer_id == 3228445189 {
+                    //TODO
+                    continue;
+                }
+
+                event_bus.publish(publisher::types::PulsgramEvent::Telegram(
+                    publisher::types::TgEvent {
+                        message: Box::new(message),
+                    },
+                ));
             }
             _ => {}
         }
@@ -153,7 +133,7 @@ pub async fn toggle_mute_peer(
     mute: bool,
 ) -> Result<(), InvocationError> {
     let peer_ref = peer.to_ref().await.ok_or_else(|| {
-        eprintln!("❌ Failed to resolve PeerRef for peer: {:?}", peer);
+        eprintln!("Failed to resolve PeerRef for peer: {:?}", peer);
         InvocationError::Dropped
     })?;
     let input_peer: InputPeer = peer_ref.into();

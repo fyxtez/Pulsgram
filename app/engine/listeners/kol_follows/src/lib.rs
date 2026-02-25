@@ -16,20 +16,31 @@ pub async fn run(
     println!("KOL Follows running...");
     let mut rx = bus.subscribe();
 
-    while let Ok(event) = rx.recv().await {
-        let message = event.message;
+    loop {
+        match rx.recv().await {
+            Ok(event) => match event {
+                publisher::types::PulsgramEvent::Telegram(event) => {
+                    let message = event.message;
 
-        let peer_id = message.peer_id().bare_id();
+                    let peer_id = message.peer_id().bare_id();
 
-        if peer_id != target_dialog_id {
-            continue;
+                    if peer_id != target_dialog_id {
+                        continue;
+                    }
+
+                    handle_follow(message, &dispatcher, destination).await;
+                }
+                _ => continue,
+            },
+            Err(error) => {
+                println!("Error receiving event: {:?}", error);
+                continue;
+            }
         }
-
-        handle_follow(message, &dispatcher, destination).await;
     }
 }
 
-pub async fn handle_follow(message: Message, dispatcher: &Client, destination: PeerRef) {
+pub async fn handle_follow(message: Box<Message>, dispatcher: &Client, destination: PeerRef) {
     if !simple_is_followed_check(message.text()) {
         return;
     }

@@ -1,21 +1,24 @@
 pub mod types;
 
-use std::sync::Arc;
-
-use telegram_types::Message;
 use tokio::sync::broadcast;
 
-use crate::types::{EventTag, TgEvent};
+use crate::types::PulsgramEvent;
 
-pub fn broadcast(bus: Arc<broadcast::Sender<TgEvent>>, message: Message, tag: EventTag) {
-    let event = TgEvent { message, tag };
+#[derive(Clone)]
+pub struct EventBus {
+    sender: broadcast::Sender<PulsgramEvent>,
+}
+impl EventBus {
+    pub fn publish(&self, event: PulsgramEvent) {
+        let _ = self.sender.send(event);
+    }
 
-    let _ = bus.send(event);
+    pub fn subscribe(&self) -> broadcast::Receiver<PulsgramEvent> {
+        self.sender.subscribe()
+    }
 }
 
-pub type EventBus = broadcast::Sender<TgEvent>;
-
 pub fn new_event_bus() -> EventBus {
-    let (tx, _) = broadcast::channel(1024);
-    tx
+    let (sender, _) = broadcast::channel(1024);
+    EventBus { sender }
 }

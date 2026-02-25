@@ -15,7 +15,6 @@ perp_kols = { path = "../engine/listeners/perp_kols" }
 forwarder = { path = "../engine/listeners/forwarder" }
 errors_reporter = { path = "../engine/listeners/errors_reporter" }
 perp_signals = { path = "../engine/listeners/perp_signals" }
-token_addressess_forwarder = { path = "../engine/listeners/token_addressess_forwarder" }
 binance = {path = "../engine/binance"}
 app_state = {path = "../engine/app_state"}
 api = {path = "../engine/api"}

@@ -1,9 +1,0 @@
-[package]
-name = "token_addressess_forwarder"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-blockchains_address_extractor = "1.0.0"
-publisher = { path = "../../publisher" }
-telegram_types = { path = "../../telegram_types" }

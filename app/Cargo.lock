@@ -265,16 +265,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blockchains_address_extractor"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9afcd2bba1aed8c1fc791aa0c883d3f52c4da7f540a5c6054722ac888f0bad5f"
-dependencies = [
- "once_cell",
- "regex",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2140,7 +2130,6 @@ dependencies = [
  "serde_json",
  "telegram",
  "telegram_types",
- "token_addressess_forwarder",
  "tokio",
 ]
 
@@ -2631,15 +2620,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "token_addressess_forwarder"
-version = "0.1.0"
-dependencies = [
- "blockchains_address_extractor",
- "publisher",
- "telegram_types",
-]
 
 [[package]]
 name = "tokio"
