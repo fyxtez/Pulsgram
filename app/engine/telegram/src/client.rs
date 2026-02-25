@@ -99,7 +99,7 @@ pub async fn handle_updates(
             Err(e) => {
                 let msg = format!("Telegram update stream error: {}", e.to_string());
 
-                let _ = event_bus.publish(publisher::types::PulsgramEvent::Error(
+                event_bus.publish(publisher::types::PulsgramEvent::Error(
                     publisher::types::ErrorEvent {
                         message_text: msg,
                         source: "UpdateHandler::StreamError",
@@ -145,7 +145,7 @@ pub async fn toggle_mute_peer(
     let peer_ref = peer
         .to_ref()
         .await
-        .ok_or_else(|| InvocationError::Dropped)?;
+        .ok_or(InvocationError::Dropped)?;
     let input_peer: InputPeer = peer_ref.into();
 
     let notify_peer =

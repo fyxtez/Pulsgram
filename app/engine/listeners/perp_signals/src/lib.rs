@@ -43,8 +43,7 @@ pub async fn run(
                             target_id, signals.id, error
                         );
 
-                        // We intentionally ignore publish result.
-                        let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+                        bus.publish(PulsgramEvent::Error(ErrorEvent {
                             message_text: msg,
                             source: "PerpSignals::SendMessage",
                         }));

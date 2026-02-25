@@ -33,9 +33,7 @@ pub fn handle_recv_error(source: &'static str, error: RecvError, bus: &EventBus)
         }
     };
 
-    // Intentionally ignore publish result.
-    // If the error bus is unavailable, there is no recovery path here.
-    let _ = bus.publish(types::PulsgramEvent::Error(types::ErrorEvent {
+    bus.publish(types::PulsgramEvent::Error(types::ErrorEvent {
         message_text: msg,
         source,
     }));

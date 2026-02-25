@@ -37,11 +37,6 @@ pub async fn run(
                                 from_peer.id, to_peer.id, error
                             );
 
-                            // We intentionally ignore the result of publish() here.
-                            // If the error bus is closed or unavailable, there is nothing this worker
-                            // can safely do about it. Forwarder must not panic or block on error reporting.
-                            // The dedicated error listener is responsible for handling reporting failures.
-
                             bus.publish(publisher::types::PulsgramEvent::Error(
                                 publisher::types::ErrorEvent {
                                     message_text: msg,

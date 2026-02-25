@@ -19,7 +19,7 @@ pub async fn resolve_username(client: &Client, username: &str) -> Result<Peer, T
     let peer = client.resolve_username(username).await?;
     match peer {
         Some(peer) => {
-            return Ok(peer);
+            Ok(peer)
         }
         None => {
             return Err(TelegramError::Other(format!(

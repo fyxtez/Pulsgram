@@ -49,7 +49,7 @@ pub async fn run(
                         );
 
                         // This worker must not panic if error reporting fails.
-                        let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+                        bus.publish(PulsgramEvent::Error(ErrorEvent {
                             message_text: msg,
                             source: "PerpKols::Forward",
                         }));

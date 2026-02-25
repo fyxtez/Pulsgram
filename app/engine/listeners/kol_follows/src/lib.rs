@@ -76,8 +76,6 @@ pub async fn handle_follow(
                 destination.id, error
             );
 
-            // We intentionally ignore publish() result.
-            // This worker must not panic or block if error reporting fails.
             bus.publish(PulsgramEvent::Error(ErrorEvent {
                 message_text: msg,
                 source: "KOL Follows::SendMessage(Test)",

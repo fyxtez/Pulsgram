@@ -5,3 +5,4 @@ pub use grammers_client::message::InputMessage;
 pub use grammers_client::peer::Peer;
 pub use grammers_client::update::Message;
 pub use grammers_session::types::PeerRef;
+pub use grammers_session::updates::UpdatesLike;
