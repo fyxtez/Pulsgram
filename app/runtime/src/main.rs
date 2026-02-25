@@ -1,18 +1,19 @@
+mod config;
+mod error;
 mod utils;
 
 use api::start_api_server;
-use dotenv::dotenv;
-use std::{env, sync::Arc};
+use std::sync::Arc;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
+    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data}, errors::TelegramError,
 };
 
-use crate::utils::create_reqwest_client;
+use crate::{config::Config, error::AppError, utils::create_reqwest_client};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
+async fn main() -> Result<(), AppError> {
+    let config = Config::from_env(true)?;
 
     let ConnectClientReturnType {
         client,
@@ -25,6 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "PASSWORD",
     )
     .await?;
+
 
     let ConnectClientReturnType {
         client: client_dispatcher,
@@ -41,10 +43,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Arc::new(client);
     let client_dispatcher = Arc::new(client_dispatcher);
 
-    let dispatcher_me = client_dispatcher.get_me().await?;
+    let dispatcher_me = telegram::get_me(&client_dispatcher).await?;
     let dispatcher_id = dispatcher_me.id().bare_id();
-
+    
     let bus = Arc::new(publisher::new_event_bus());
+    
 
     tokio::spawn(handle_updates(
         Arc::clone(&client),
@@ -71,67 +74,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     drop(dialogs);
     drop(dialogs_from_dispatcher);
 
-    let kol_follows = peers_map_dispatcher
-        .remove(&env::var("KOL_FOLLOWS_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Could not find kol_follows")?;
-
     let errors_peer = peers_map_dispatcher
-        .remove(&env::var("ERRORS_PEER_ID")?.parse::<i64>()?)
-        .ok_or("Could not find errors peer")?;
+        .remove(&config.errors_peer_id)
+        .ok_or(AppError::NotFound("errors_peer_id"))?;
+
+    let kol_follows = peers_map_dispatcher
+        .remove(&config.kol_follows_chat_id)
+        .ok_or(AppError::NotFound("kol_follows_chat_id"))?;
 
     let kol_follows_test = peers_map_dispatcher
-        .remove(&env::var("KOL_FOLLOWS_TEST_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Cant find test kol follow")?;
+        .remove(&config.kol_follows_test_chat_id)
+        .ok_or(AppError::NotFound("kol_follows_test_chat_id"))?;
 
     let perp_signals = peers_map_dispatcher
-        .remove(&env::var("PERP_SIGNALS_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Could not find perp_signals")?;
+        .remove(&config.perp_signals_chat_id)
+        .ok_or(AppError::NotFound("perp_signals_chat_id"))?;
 
     let perp_signals_test = peers_map_dispatcher
-        .remove(&env::var("PERP_SIGNALS_TEST_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Could not find perp_signals_test")?;
+        .remove(&config.perp_signals_test_chat_id)
+        .ok_or(AppError::NotFound("perp_signals_test_chat_id"))?;
 
     let perp_kols = peers_map
-        .remove(&env::var("PERP_KOLS_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Could not find perp_kols")?;
+        .remove(&config.perp_kols_chat_id)
+        .ok_or(AppError::NotFound("perp_kols_chat_id"))?;
 
     let perp_kols_test = peers_map
-        .remove(&env::var("PERP_KOLS_TEST_CHAT_ID")?.parse::<i64>()?)
-        .ok_or("Could not find perp_kols_test")?;
+        .remove(&config.perp_kols_test_chat_id)
+        .ok_or(AppError::NotFound("perp_kols_test_chat_id"))?;
 
-    let perp_kols_usernames: Vec<String> = env::var("PERP_KOLS_USERNAMES")?
-        .split(',')
-        .map(|s| s.to_string())
-        .collect();
+    let perp_kols_usernames: Vec<String> = config.perp_kols_usernames;
 
     drop(peers_map);
     drop(peers_map_dispatcher);
 
-    let fyxtez_peer = client
-        .resolve_username("fyxtez")
-        .await?
-        .ok_or("Username fyxtez not found")?;
 
-    let fyxtez = fyxtez_peer
+    let fyxtez_peer_ref = telegram::resolve_username(&client, "fyxtez")
+        .await?
         .to_ref()
         .await
-        .ok_or("Could not convert fyxtez to PeerRef")?;
-    let use_testnet = true;
-
-    let (api_key_var, api_secret_var) = if use_testnet {
-        ("BINANCE_API_KEY_TEST", "BINANCE_API_SECRET_TEST")
-    } else {
-        ("BINANCE_API_KEY", "BINANCE_API_SECRET")
-    };
-    let binance_env_vars = binance::utils::load_env_vars(api_key_var, api_secret_var)?;
+        .ok_or(AppError::Telegram(TelegramError::Other(String::from("Could not convert to PeerRef"))))?;
 
     let reqwest_client = create_reqwest_client()?;
 
     let _binance = binance::client::BinanceClient::new(
         reqwest_client.clone(),
         binance::constants::TESTNET_FUTURES,
-        &binance_env_vars.api_key,
-        &binance_env_vars.api_secret,
+        &config.binance_api_key,
+        &config.binance_api_secret,
     );
 
     let state = app_state::AppState {
@@ -146,7 +135,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(perp_signals::run(
         Arc::clone(&bus),
         Arc::clone(&client_dispatcher),
-        env::var("LCS_USER_ID")?.parse::<i64>()?,
+        config.lcs_user_id,
         if cfg!(feature = "production") {
             perp_signals
         } else {
@@ -162,7 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(kol_follows::run(
         Arc::clone(&bus),
-        env::var("RS_USER_ID")?.parse::<i64>()?,
+        config.rs_user_id,
         if cfg!(feature = "production") {
             kol_follows
         } else {
@@ -175,8 +164,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&bus),
         // TODO: change this to dispatcher after wolfy answers the bot problem.
         Arc::clone(&client),
-        fyxtez,
-        env::var("RS_USER_ID")?.parse::<i64>()?,
+        fyxtez_peer_ref,
+        config.rs_user_id,
         if cfg!(feature = "production") {
             perp_kols
         } else {

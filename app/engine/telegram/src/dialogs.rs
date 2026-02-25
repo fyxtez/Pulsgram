@@ -1,10 +1,11 @@
 use grammers_client::Client;
-use grammers_client::InvocationError;
 use grammers_client::peer::Dialog;
 use grammers_client::peer::Peer;
 use grammers_session::types::PeerRef;
 use serde::Serialize;
 use std::collections::HashMap;
+
+use crate::errors::TelegramError;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq)]
 #[repr(u8)]
@@ -30,7 +31,7 @@ pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     }
 }
 
-pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {
+pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, TelegramError> {
     let mut iter_dialogs = client.iter_dialogs();
 
     let mut dialogs: Vec<Dialog> = Vec::new();

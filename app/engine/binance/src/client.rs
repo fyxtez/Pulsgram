@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::utils::send_signed_request;
+use crate::{error::BinanceError, utils::send_signed_request};
 use reqwest::Method;
 
 pub struct BinanceClient {
@@ -38,10 +38,7 @@ impl BinanceClient {
         }
     }
 
-    pub async fn get_trading_fees(
-        &self,
-        symbol: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_trading_fees(&self, symbol: &str) -> Result<String, BinanceError> {
         let query = format!("symbol={}", symbol);
 
         send_signed_request(
@@ -55,7 +52,7 @@ impl BinanceClient {
         )
         .await
     }
-    pub async fn get_account_info(&self) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_account_info(&self) -> Result<String, BinanceError> {
         send_signed_request(
             &self.client,
             Method::GET,
@@ -67,7 +64,7 @@ impl BinanceClient {
         )
         .await
     }
-    pub async fn create_listen_key(&self) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn create_listen_key(&self) -> Result<String, BinanceError> {
         let url = format!("{}/fapi/v1/listenKey", self.base_url);
         let resp = self
             .client
@@ -78,16 +75,13 @@ impl BinanceClient {
             .text()
             .await?;
 
-        let v: serde_json::Value = serde_json::from_str(&resp)?;
-        v["listenKey"]
+        let response_json: serde_json::Value = serde_json::from_str(&resp)?;
+        response_json["listenKey"]
             .as_str()
             .map(|s| s.to_string())
-            .ok_or_else(|| format!("no listenKey in response: {resp}").into())
+            .ok_or(BinanceError::MissingField("listenKey"))
     }
-    pub async fn close_listen_key(
-        &self,
-        listen_key: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn close_listen_key(&self, listen_key: &str) -> Result<(), BinanceError> {
         let url = format!(
             "{}/fapi/v1/listenKey?listenKey={}",
             self.base_url, listen_key
@@ -106,7 +100,7 @@ impl BinanceClient {
         symbol: &str,
         side: &OrderSide,
         quantity: f64,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, BinanceError> {
         let query = format!(
             "symbol={}&side={}&type=MARKET&quantity={}",
             symbol, side, quantity
@@ -123,11 +117,7 @@ impl BinanceClient {
         )
         .await
     }
-    pub async fn set_leverage(
-        &self,
-        symbol: &str,
-        leverage: u32,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn set_leverage(&self, symbol: &str, leverage: u32) -> Result<String, BinanceError> {
         let query = format!("symbol={}&leverage={}", symbol, leverage);
 
         send_signed_request(
@@ -147,7 +137,7 @@ impl BinanceClient {
         side: &OrderSide,
         quantity: f64,
         price: f64,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, BinanceError> {
         let query = format!(
             "symbol={}&side={}&type=LIMIT&quantity={}&price={}&timeInForce=GTC",
             symbol, side, quantity, price

@@ -1,5 +1,6 @@
 use std::env;
-use std::error::Error;
+
+use crate::errors::TelegramError;
 
 #[derive(Debug)]
 pub struct ConfigData {
@@ -14,15 +15,37 @@ pub fn load_tg_client_config(
     api_hash: &str,
     phone_number: &str,
     password: &str,
-) -> Result<ConfigData, Box<dyn Error>> {
-    let api_id_str = env::var(api_id).map_err(|_| format!("Missing env var: {}", api_id))?;
+) -> Result<ConfigData, TelegramError> {
+    let api_id_str = env::var(api_id)
+        .map_err(|e| TelegramError::EnvVar {
+            name: api_id.to_string(),
+            source: e,
+        })?;
+
     let api_id = api_id_str
         .parse::<i32>()
-        .map_err(|_| format!("Failed to parse {} as i32", api_id))?;
-    let api_hash = env::var(api_hash).map_err(|_| format!("Missing env var: {}", api_hash))?;
-    let phone_number =
-        env::var(phone_number).map_err(|_| format!("Missing env var: {}", phone_number))?;
-    let password = env::var(password).map_err(|_| format!("Missing env var: {}", password))?;
+        .map_err(|e| TelegramError::ParseInt {
+            name: api_id.to_string(),
+            source: e,
+        })?;
+
+    let api_hash = env::var(api_hash)
+        .map_err(|e| TelegramError::EnvVar {
+            name: api_hash.to_string(),
+            source: e,
+        })?;
+
+    let phone_number = env::var(phone_number)
+        .map_err(|e| TelegramError::EnvVar {
+            name: phone_number.to_string(),
+            source: e,
+        })?;
+
+    let password = env::var(password)
+        .map_err(|e| TelegramError::EnvVar {
+            name: password.to_string(),
+            source: e,
+        })?;
 
     Ok(ConfigData {
         api_id,

@@ -1,12 +1,6 @@
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 
-#[derive(Debug)]
-pub struct BinanceEnv {
-    pub api_key: String,
-    pub api_secret: String,
-}
-
 fn get_timestamp() -> u128 {
     // We expect system time to always be after UNIX_EPOCH (1970-01-01).
     // If this fails, the machine's clock is misconfigured, which is a fatal
@@ -30,6 +24,8 @@ fn create_signature(query_string: &str, secret: &str) -> String {
 
 use reqwest::Method;
 
+use crate::error::BinanceError;
+
 pub async fn send_signed_request(
     client: &reqwest::Client,
     method: Method,
@@ -38,7 +34,7 @@ pub async fn send_signed_request(
     api_key: &str,
     api_secret: &str,
     mut query_string: String,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<String,BinanceError> {
     let timestamp = get_timestamp();
 
     if !query_string.is_empty() {
@@ -71,20 +67,6 @@ pub async fn send_signed_request(
     }
 
     Ok(text)
-}
-
-pub fn load_env_vars(
-    api_key: &str,
-    api_secret: &str,
-) -> Result<BinanceEnv, Box<dyn std::error::Error>> {
-    let api_key = std::env::var(api_key).map_err(|_| "BINANCE_API_KEY_TEST not set")?;
-
-    let api_secret = std::env::var(api_secret).map_err(|_| "BINANCE_API_SECRET_TEST not set")?;
-
-    Ok(BinanceEnv {
-        api_key,
-        api_secret,
-    })
 }
 
 #[cfg(test)]

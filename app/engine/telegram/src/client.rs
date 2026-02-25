@@ -1,10 +1,10 @@
+
 use std::{
-    error::Error,
     io::{self},
     sync::Arc,
 };
 
-use crate::config::load_tg_client_config;
+use crate::{config::load_tg_client_config, errors::TelegramError};
 use grammers_client::{InvocationError, SignInError, client::UpdatesConfiguration};
 use grammers_client::{peer::Peer, update::Update};
 use grammers_mtsender::SenderPool;
@@ -18,9 +18,13 @@ pub struct ConnectClientReturnType {
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
 }
 
-async fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, Box<dyn Error>> {
+async fn create_sender_pool(session_path: &str, api_id: i32) -> Result<SenderPool, TelegramError> {
     Ok(SenderPool::new(
-        Arc::new(SqliteSession::open(session_path).await?),
+        Arc::new(
+            SqliteSession::open(session_path)
+                .await
+                .map_err(|e| TelegramError::Other(e.to_string()))?,
+        ),
         api_id,
     ))
 }
@@ -31,7 +35,7 @@ pub async fn connect_client(
     api_hash_var: &str,
     phone_number_var: &str,
     password_var: &str,
-) -> Result<ConnectClientReturnType, Box<dyn Error>> {
+) -> Result<ConnectClientReturnType, TelegramError> {
     let config = load_tg_client_config(api_id_var, api_hash_var, phone_number_var, password_var)?;
 
     let sender_pool = create_sender_pool(session_path, config.api_id).await?;
@@ -139,9 +143,10 @@ pub async fn toggle_mute_peer(
     peer: &Peer,
     mute: bool,
 ) -> Result<(), InvocationError> {
-    let peer_ref = peer.to_ref().await.ok_or_else(|| {
-        InvocationError::Dropped
-    })?;
+    let peer_ref = peer
+        .to_ref()
+        .await
+        .ok_or_else(|| InvocationError::Dropped)?;
     let input_peer: InputPeer = peer_ref.into();
 
     let notify_peer =
