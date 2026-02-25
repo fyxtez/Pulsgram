@@ -1,9 +1,9 @@
 mod regex;
 
-use publisher::EventBus;
+use publisher::types::{ErrorEvent, PulsgramEvent};
+use publisher::{EventBus, handle_recv_error};
 use std::sync::Arc;
-use telegram_types::PeerRef;
-use telegram_types::{Client, InputMessage};
+use telegram_types::{Client, InputMessage, PeerRef};
 
 use crate::regex::{format_signal, parse_trading_signal, remove_emojis};
 
@@ -22,37 +22,53 @@ pub async fn run(
                 publisher::types::PulsgramEvent::Telegram(event) => {
                     let message = event.message;
 
-                    let message_peer_id = message.peer_id();
-
-                    if message_peer_id.bare_id() != target_id {
+                    if message.peer_id().bare_id() != target_id {
                         continue;
                     }
 
-                    let message_cleaned_up = remove_emojis(message.text());
+                    let message_cleaned_up =
+                        remove_emojis(message.text());
 
-                    let Some(signal) = parse_trading_signal(&message_cleaned_up) else {
+                    let Some(signal) =
+                        parse_trading_signal(&message_cleaned_up)
+                    else {
                         continue;
                     };
 
-                    let formatted_signal = format_signal(&signal);
+                    let formatted_signal =
+                        format_signal(&signal);
 
-                    let input_message = InputMessage::new().html(formatted_signal);
+                    let input_message =
+                        InputMessage::new().html(formatted_signal);
 
-                    // TODO: Ovde publishaj novi event proveri broadcast i proemni ga da ima drugicje event
-                    // novi listener ce da slusa na taj novi event i radi sta trijeba.
-                    match client_dispatcher.send_message(signals, input_message).await {
-                        Ok(_) => {}
-                        Err(err) => {
-                            println!("{:?}", message.text());
-                            println!("{:?}", err);
-                        }
+                    if let Err(error) =
+                        client_dispatcher
+                            .send_message(signals, input_message)
+                            .await
+                    {
+                        let msg = format!(
+                            "Perp Signals failed.\nTarget: {}\nSignals Peer: {}\nError: {}",
+                            target_id,
+                            signals.id,
+                            error
+                        );
+
+                        // We intentionally ignore publish result.
+                        let _ = bus.publish(
+                            PulsgramEvent::Error(ErrorEvent {
+                                message_text: msg,
+                                source: "PerpSignals::SendMessage",
+                            }),
+                        );
                     }
                 }
-                _ => continue,
+                _ => {}
             },
+
             Err(error) => {
-                println!("Error receiving event: {:?}", error);
-                continue;
+                if handle_recv_error("PerpSignals RecvError", error, &bus) {
+                    break;
+                }
             }
         }
     }

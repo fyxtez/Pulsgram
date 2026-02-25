@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::sync::Arc;
-
 use grammers_client::Client;
 use grammers_client::InvocationError;
 use grammers_client::peer::Dialog;
 use grammers_client::peer::Peer;
 use grammers_session::types::PeerRef;
 use serde::Serialize;
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq)]
 #[repr(u8)]
@@ -33,55 +30,17 @@ pub fn get_dialog_type(dialog: &Dialog) -> DialogType {
     }
 }
 
-pub fn find_dialog_data_by_bare_id(
-    dialogs: &[DialogData],
-    target_bare_id: i64,
-) -> Option<&DialogData> {
-    dialogs
-        .iter()
-        .find(|dialog_data| dialog_data.bare_id == target_bare_id)
-}
-
 pub async fn load_dialogs(client: &Client) -> Result<Vec<Dialog>, InvocationError> {
     let mut iter_dialogs = client.iter_dialogs();
 
-    let dialogs_len = iter_dialogs.total().await.unwrap_or(0);
+    let mut dialogs: Vec<Dialog> = Vec::new();
 
-    let mut dialogs: Vec<Dialog> = vec![];
-
-    for _ in 0..dialogs_len {
-        let next_dialog_option = iter_dialogs.next().await?;
-        if let Some(next_dialog) = next_dialog_option {
-            dialogs.push(next_dialog);
-        }
+    while let Some(dialog) = iter_dialogs.next().await? {
+        dialogs.push(dialog);
     }
-
     println!("Telegram dialogs loaded.");
 
     Ok(dialogs)
-}
-
-//TODO: Seems bare_id is fixed. Recheck if this can be better written
-
-pub async fn get_peer_by_bare_id(
-    client: &Client,
-    bare_id_to_find: i64,
-) -> Result<Option<Peer>, InvocationError> {
-    let mut iter_dialogs = client.iter_dialogs();
-
-    while let Some(dialog) = iter_dialogs.next().await? {
-        let dialog_bare_id = match &dialog.peer {
-            Peer::User(user) => user.id().bare_id(),
-            Peer::Group(group) => group.id().bare_id(),
-            Peer::Channel(channel) => channel.id().bare_id(),
-        };
-
-        if dialog_bare_id == bare_id_to_find {
-            return Ok(Some(dialog.peer));
-        }
-    }
-
-    Ok(None)
 }
 
 pub async fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, PeerRef> {
@@ -94,7 +53,7 @@ pub async fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, Pe
         if let Some(peer_ref) = peer.to_ref().await {
             map.insert(bare_id, peer_ref);
         } else {
-            eprintln!("❌ Failed to resolve peer {}", bare_id);
+            eprintln!("Failed to resolve peer {}", bare_id);
         }
     }
 
@@ -102,97 +61,43 @@ pub async fn build_peers_map_from_dialogs(dialogs: &[Dialog]) -> HashMap<i64, Pe
 
     map
 }
-pub async fn get_peers_by_bare_ids(
-    client: &Client,
-    bare_ids: Vec<i64>,
-) -> Result<HashMap<i64, Peer>, InvocationError> {
-    let wanted: HashSet<i64> = bare_ids.into_iter().collect();
-    let mut found: HashMap<i64, Peer> = HashMap::new();
 
-    let mut iter_dialogs = client.iter_dialogs();
-
-    while let Some(dialog) = iter_dialogs.next().await? {
-        let peer = dialog.peer;
-
-        let bare_id = match &peer {
-            Peer::User(user) => user.id().bare_id(),
-            Peer::Group(group) => group.id().bare_id(),
-            Peer::Channel(channel) => channel.id().bare_id(),
-        };
-
-        if wanted.contains(&bare_id) {
-            found.insert(bare_id, peer);
-
-            // early exit if we already found everything
-            if found.len() == wanted.len() {
-                break;
-            }
-        }
-    }
-
-    Ok(found)
-}
-
-pub async fn get_peer(
-    client: &Arc<Client>,
-    bare_id: i64,
-) -> Result<Peer, Box<dyn std::error::Error>> {
-    get_peer_by_bare_id(client, bare_id)
-        .await?
-        .ok_or_else(|| format!("Could not find peer with ID: {}", bare_id).into())
-}
-
-pub fn print_dialogs(dialogs: &Vec<Dialog>) -> Result<(), InvocationError> {
+pub fn print_dialogs(dialogs: &[Dialog]) {
     for dialog in dialogs {
         let dialog_type = get_dialog_type(dialog);
         let peer = dialog.peer();
+        let id = peer.id().bare_id();
 
-        let (id, name) = match peer {
-            Peer::User(user) => (
-                user.id().bare_id(),
-                user.username().unwrap_or("No username"),
-            ),
-            Peer::Group(group) => (group.id().bare_id(), group.title().unwrap_or("No title")),
-            Peer::Channel(channel) => (channel.id().bare_id(), channel.title()),
+        let name = match peer {
+            Peer::User(user) => user.username().unwrap_or("No username"),
+            Peer::Group(group) => group.title().unwrap_or("No title"),
+            Peer::Channel(channel) => channel.title(),
         };
 
         println!("Dialog ID: {}, Name: {}, Type: {:?}", id, name, dialog_type);
     }
-
-    Ok(())
 }
 
 pub fn print_peer_data(peer: &Peer) {
+    let id = peer.id().bare_id();
+
     match peer {
         Peer::User(user) => {
-            println!(
-                "User Peer - ID: {}, Username: {:?}",
-                user.id().bare_id(),
-                user.username()
-            );
+            println!("User Peer - ID: {}, Username: {:?}", id, user.username());
         }
         Peer::Group(group) => {
-            println!(
-                "Group Peer - ID: {}, Title: {:?}",
-                group.id().bare_id(),
-                group.title()
-            );
+            println!("Group Peer - ID: {}, Title: {:?}", id, group.title());
         }
         Peer::Channel(channel) => {
-            println!(
-                "Channel Peer - ID: {}, Title: {:?}",
-                channel.id().bare_id(),
-                channel.title()
-            );
+            println!("Channel Peer - ID: {}, Title: {:?}", id, channel.title());
         }
     }
 }
 
 pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
+    let id = peer.id().bare_id();
     match peer {
         Peer::User(user) => {
-            let id = user.id().bare_id();
-
             let data = DialogData {
                 name: user.first_name().unwrap_or("Unnamed user").to_string(),
                 username: user.username().map(|u| u.to_string()),
@@ -204,8 +109,6 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
         }
 
         Peer::Group(group) => {
-            let id = group.id().bare_id();
-
             let data = DialogData {
                 name: group.title().unwrap_or("Unnamed group").to_string(),
                 username: None,
@@ -217,8 +120,6 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
         }
 
         Peer::Channel(channel) => {
-            let id = channel.id().bare_id();
-
             let data = DialogData {
                 name: channel.title().to_string(),
                 username: channel.username().map(|u| u.to_string()),
@@ -231,8 +132,8 @@ pub fn peer_to_dialog_data(peer: &Peer) -> (i64, DialogData) {
     }
 }
 
-pub fn normalize_dialogs_into_data(dialogs: &Vec<Dialog>) -> dashmap::DashMap<i64, DialogData> {
-    let dialogs_data: dashmap::DashMap<i64, DialogData> = dashmap::DashMap::new();
+pub fn normalize_dialogs_into_data(dialogs: &[Dialog]) -> dashmap::DashMap<i64, DialogData> {
+    let dialogs_data = dashmap::DashMap::new();
 
     for dialog in dialogs {
         let peer = dialog.peer();

@@ -1,7 +1,7 @@
-use publisher::EventBus;
+use publisher::types::{ErrorEvent, PulsgramEvent};
+use publisher::{EventBus, handle_recv_error};
 use std::sync::Arc;
-use telegram_types::Client;
-use telegram_types::PeerRef;
+use telegram_types::{Client, PeerRef};
 
 pub async fn run(
     bus: Arc<EventBus>,
@@ -39,21 +39,31 @@ pub async fn run(
                         continue;
                     }
 
-                    if let Err(err) = client
+                    if let Err(error) = client
                         .forward_messages(perp_kols_peer, &[message.id()], fyxtez)
                         .await
                     {
-                        println!("{:?}", message.text());
-                        println!("{:?}", err);
+                        let msg = format!(
+                            "Perp KOL forward failed.\nFrom Target: {}\nTo Peer: {}\nError: {}",
+                            from_target_id,
+                            perp_kols_peer.id,
+                            error
+                        );
+
+                        // This worker must not panic if error reporting fails.
+                        let _ = bus.publish(PulsgramEvent::Error(ErrorEvent {
+                            message_text: msg,
+                            source: "PerpKols::Forward",
+                        }));
                     }
                 }
-                _ => {
-                    continue;
-                }
+                _ => {}
             },
+
             Err(error) => {
-                println!("Error receiving event: {:?}", error);
-                continue;
+                if handle_recv_error("PerpKols RecvError", error, &bus) {
+                    break;
+                }
             }
         }
     }

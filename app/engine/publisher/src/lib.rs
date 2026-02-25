@@ -1,6 +1,7 @@
 pub mod types;
 
 use tokio::sync::broadcast;
+use tokio::sync::broadcast::error::RecvError;
 
 use crate::types::PulsgramEvent;
 
@@ -21,4 +22,32 @@ impl EventBus {
 pub fn new_event_bus() -> EventBus {
     let (sender, _) = broadcast::channel(1024);
     EventBus { sender }
+}
+
+pub fn handle_recv_error(
+    source: &'static str,
+    error: RecvError,
+    bus: &EventBus,
+) -> bool {
+    let msg = match error {
+        RecvError::Closed => {
+            "Broadcast channel closed".to_string()
+        }
+        RecvError::Lagged(n) => {
+            format!("Broadcast lagged by {} messages", n)
+        }
+    };
+
+    // Intentionally ignore publish result.
+    // If the error bus is unavailable, there is no recovery path here.
+    let _ = bus.publish(
+        types::PulsgramEvent::Error(
+            types::ErrorEvent {
+                message_text: msg,
+                source,
+            },
+        )
+    );
+
+    matches!(error, RecvError::Closed)
 }

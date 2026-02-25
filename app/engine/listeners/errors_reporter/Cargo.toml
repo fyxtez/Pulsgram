@@ -7,3 +7,4 @@ edition = "2024"
 tokio = { version = "1.49.0", features = ["full"] }
 publisher = { path = "../../publisher" }
 telegram_types = { path = "../../telegram_types"}
+telegram = { path = "../../telegram"}

@@ -94,7 +94,14 @@ pub async fn handle_updates(
         let update = match update_result {
             Ok(u) => u,
             Err(e) => {
-                eprintln!("Telegram update stream error: {e}");
+                let msg = format!("Telegram update stream error: {}", e.to_string());
+
+                let _ = event_bus.publish(publisher::types::PulsgramEvent::Error(
+                    publisher::types::ErrorEvent {
+                        message_text: msg,
+                        source: "UpdateHandler::StreamError",
+                    },
+                ));
                 continue;
             }
         };
@@ -133,7 +140,6 @@ pub async fn toggle_mute_peer(
     mute: bool,
 ) -> Result<(), InvocationError> {
     let peer_ref = peer.to_ref().await.ok_or_else(|| {
-        eprintln!("Failed to resolve PeerRef for peer: {:?}", peer);
         InvocationError::Dropped
     })?;
     let input_peer: InputPeer = peer_ref.into();

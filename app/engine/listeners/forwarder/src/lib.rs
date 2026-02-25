@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use publisher::handle_recv_error;
 use telegram_types::Client;
 use telegram_types::PeerRef;
 
@@ -29,17 +30,33 @@ pub async fn run(
                     }
 
                     match client.send_message(to_peer, message_text).await {
-                        Ok(_) => continue,
-                        Err(_error) => {
-                            //TODO: Report error wif out publishing agian.
+                        Ok(_) => {}
+                        Err(error) => {
+                            let msg = format!(
+                                "Failed to forward message.\nFrom: {}\nTo: {}\nError: {}",
+                                from_peer.id, to_peer.id, error
+                            );
+
+                            // We intentionally ignore the result of publish() here.
+                            // If the error bus is closed or unavailable, there is nothing this worker
+                            // can safely do about it. Forwarder must not panic or block on error reporting.
+                            // The dedicated error listener is responsible for handling reporting failures.
+
+                            let _ = bus.publish(publisher::types::PulsgramEvent::Error(
+                                publisher::types::ErrorEvent {
+                                    message_text: msg,
+                                    source: "Forwarder::Err",
+                                },
+                            ));
                         }
                     }
                 }
                 _ => continue,
             },
             Err(error) => {
-                println!("Error receiving event: {:?}", error);
-                continue;
+                if handle_recv_error("Forwarder RecvError", error, &bus) {
+                    break;
+                }
             }
         }
     }

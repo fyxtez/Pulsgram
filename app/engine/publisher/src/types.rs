@@ -45,6 +45,7 @@ pub struct TgEvent {
 
 #[derive(Debug, Clone)]
 pub struct ErrorEvent {
+    pub source: &'static str,
     pub message_text: String,
 }
 

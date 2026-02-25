@@ -540,6 +540,7 @@ name = "errors_reporter"
 version = "0.1.0"
 dependencies = [
  "publisher",
+ "telegram",
  "telegram_types",
  "tokio",
 ]
