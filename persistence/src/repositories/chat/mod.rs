@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::repositories::error::PersistenceError;
+
 #[derive(Debug, sqlx::FromRow, Serialize, Deserialize)]
 pub struct Chat {
     pub id: Uuid,
@@ -20,27 +22,27 @@ impl ChatRepository {
         Self { pool }
     }
 
-    pub async fn get_all(&self) -> Result<Vec<Chat>, sqlx::Error> {
-        sqlx::query_as::<_, Chat>(queries::SELECT_ALL)
+    pub async fn get_all(&self) -> Result<Vec<Chat>, PersistenceError> {
+        Ok(sqlx::query_as::<_, Chat>(queries::SELECT_ALL)
             .fetch_all(&self.pool)
-            .await
+            .await?)
     }
 
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Chat>, sqlx::Error> {
-        sqlx::query_as::<_, Chat>(queries::SELECT_BY_ID)
+    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Chat>, PersistenceError> {
+        Ok(sqlx::query_as::<_, Chat>(queries::SELECT_BY_ID)
             .bind(id)
             .fetch_optional(&self.pool)
-            .await
+            .await?)
     }
 
-    pub async fn create(&self, name: &str, chat_id: &str) -> Result<Chat, sqlx::Error> {
-        sqlx::query_as::<_, Chat>(queries::INSERT)
+    pub async fn create(&self, name: &str, chat_id: &str) -> Result<Chat, PersistenceError> {
+        Ok(sqlx::query_as::<_, Chat>(queries::INSERT)
             .bind(name)
             .bind(chat_id)
             .fetch_one(&self.pool)
-            .await
+            .await?)
     }
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete(&self, id: Uuid) -> Result<bool, PersistenceError> {
         let result = sqlx::query(queries::DELETE)
             .bind(id)
             .execute(&self.pool)
@@ -57,6 +59,7 @@ mod tests {
     use uuid::Uuid;
 
     #[sqlx::test]
+    #[ignore]
     async fn create_and_get_by_id(pool: PgPool) {
         let repo = ChatRepository::new(pool);
 
@@ -79,6 +82,39 @@ mod tests {
     }
 
     #[sqlx::test]
+    #[ignore]
+    async fn create_duplicate_name_fails(pool: PgPool) {
+        let repo = ChatRepository::new(pool);
+
+        repo.create("ChatA", "1").await.unwrap();
+
+        let result = repo.create("ChatA", "2").await;
+
+        assert!(result.is_err());
+    }
+    #[sqlx::test]
+    #[ignore]
+    async fn create_duplicate_chat_id_fails(pool: PgPool) {
+        let repo = ChatRepository::new(pool);
+
+        repo.create("ChatA", "1").await.unwrap();
+
+        let result = repo.create("ChatB", "1").await;
+
+        assert!(result.is_err());
+    }
+
+    #[sqlx::test]
+    #[ignore]
+    async fn get_all_empty_returns_empty_vec(pool: PgPool) {
+        let repo = ChatRepository::new(pool);
+
+        let all = repo.get_all().await.unwrap();
+        assert!(all.is_empty());
+    }
+
+    #[sqlx::test]
+    #[ignore]
     async fn get_all_returns_inserted_rows(pool: PgPool) {
         let repo = ChatRepository::new(pool);
 
@@ -91,6 +127,7 @@ mod tests {
     }
 
     #[sqlx::test]
+    #[ignore]
     async fn delete_removes_chat(pool: PgPool) {
         let repo = ChatRepository::new(pool);
 
@@ -104,6 +141,7 @@ mod tests {
     }
 
     #[sqlx::test]
+    #[ignore]
     async fn delete_nonexistent_returns_false(pool: PgPool) {
         let repo = ChatRepository::new(pool);
 

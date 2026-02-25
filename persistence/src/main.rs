@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = connect(&database_url).await?;
-    
+
     let _repos = Repositories::new(pool.clone());
 
     println!("Connected to database!");

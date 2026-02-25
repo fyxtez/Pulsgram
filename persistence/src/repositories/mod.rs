@@ -1,4 +1,5 @@
 pub mod chat;
+pub mod error;
 
 use sqlx::PgPool;
 

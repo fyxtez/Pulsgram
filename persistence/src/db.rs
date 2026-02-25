@@ -4,7 +4,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::time::Duration;
 use tokio::time::timeout;
 
-use crate::repositories::Repositories;
+use crate::repositories::{Repositories, error::PersistenceError};
 
 pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
     PgPoolOptions::new()
@@ -51,21 +51,26 @@ struct Dump {
 }
 
 #[allow(dead_code)]
-pub async fn dump_all(repos: &Repositories) -> Result<(), Box<dyn std::error::Error>> {
+// TODO: (Not optimal but ok) Mapped errors of json and std::fs::write to Database errors.
+pub async fn dump_all(repos: &Repositories) -> Result<(), PersistenceError> {
     let dump = Dump {
         chats: repos.chat.get_all().await?,
     };
 
-    std::fs::write("db_dump.json", serde_json::to_string_pretty(&dump)?)?;
+    let json = serde_json::to_string_pretty(&dump).map_err(|_| PersistenceError::DatabaseError)?;
+
+    std::fs::write("db_dump.json", json).map_err(|_| PersistenceError::DatabaseError)?;
 
     println!("Dumped all data to db_dump.json");
     Ok(())
 }
 #[allow(dead_code)]
-pub async fn restore_all(repos: &Repositories) -> Result<(), Box<dyn std::error::Error>> {
-    let json = std::fs::read_to_string("db_dump.json")?;
+// TODO: (Not optimal but ok) Mapped errors of json and std::fs::read_to_string to Database errors.
+pub async fn restore_all(repos: &Repositories) -> Result<(), PersistenceError> {
+    let json =
+        std::fs::read_to_string("db_dump.json").map_err(|_| PersistenceError::DatabaseError)?;
 
-    let dump: Dump = serde_json::from_str(&json)?;
+    let dump: Dump = serde_json::from_str(&json).map_err(|_| PersistenceError::DatabaseError)?;
 
     for chat in dump.chats {
         repos.chat.create(&chat.name, &chat.chat_id).await?;
