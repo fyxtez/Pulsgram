@@ -57,15 +57,15 @@ pub fn remove_emojis(input: &str) -> std::borrow::Cow<'_, str> {
 pub fn format_signal(signal: &TradingSignal) -> String {
     let direction = if signal.is_long { "LONG" } else { "SHORT" };
 
-    let entry_low = signal.entry * 0.99;
-    let entry_high = signal.entry * 1.01;
+    let entry_low = signal.entry;
+    let entry_high = signal.entry;
 
     let Some(tp3) = signal.targets.last() else {
         return String::from("Invalid signal: missing targets");
     };
 
-    let target_low = tp3 * 0.98;
-    let target_high = tp3 * 1.02;
+    let target_low = tp3;
+    let target_high = tp3;
 
     let stop_loss = signal.stop_loss;
 

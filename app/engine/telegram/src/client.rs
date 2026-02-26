@@ -97,7 +97,7 @@ pub async fn handle_updates(
         let update = match update_result {
             Ok(u) => u,
             Err(e) => {
-                let msg = format!("Telegram update stream error: {}", e.to_string());
+                let msg = format!("Telegram update stream error: {}", e);
 
                 event_bus.publish(publisher::types::PulsgramEvent::Error(
                     publisher::types::ErrorEvent {

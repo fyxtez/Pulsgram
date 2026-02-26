@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug)]
 pub enum TelegramError {
     Invocation(grammers_client::InvocationError),
-    SignIn(grammers_client::SignInError),
+    SignIn(Box<grammers_client::SignInError>),
     StdIO(std::io::Error),
     Other(String),
     EnvVar {
@@ -71,6 +71,6 @@ impl From<std::io::Error> for TelegramError {
 
 impl From<grammers_client::SignInError> for TelegramError {
     fn from(err: grammers_client::SignInError) -> Self {
-        TelegramError::SignIn(err)
+        TelegramError::SignIn(Box::new(err))
     }
 }

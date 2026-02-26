@@ -22,8 +22,8 @@ pub async fn run(
 
     loop {
         match rx.recv().await {
-            Ok(event) => match event {
-                publisher::types::PulsgramEvent::Telegram(tg_event) => {
+            Ok(event) => {
+                if let PulsgramEvent::Telegram(tg_event) = event {
                     let message = tg_event.message;
 
                     if message.peer_id().bare_id() != from_target_id {
@@ -48,15 +48,13 @@ pub async fn run(
                             from_target_id, perp_kols_peer.id, error
                         );
 
-                        // This worker must not panic if error reporting fails.
                         bus.publish(PulsgramEvent::Error(ErrorEvent {
                             message_text: msg,
                             source: "PerpKols::Forward",
                         }));
                     }
                 }
-                _ => {}
-            },
+            }
 
             Err(error) => {
                 if handle_recv_error("PerpKols RecvError", error, &bus) {

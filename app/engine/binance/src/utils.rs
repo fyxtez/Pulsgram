@@ -1,5 +1,9 @@
+use crate::error::BinanceError;
 use hmac::{Hmac, Mac};
+use reqwest::Method;
 use sha2::Sha256;
+
+const DEFAULT_RECV_WINDOW: u64 = 5000;
 
 fn get_timestamp() -> u128 {
     // We expect system time to always be after UNIX_EPOCH (1970-01-01).
@@ -22,10 +26,6 @@ fn create_signature(query_string: &str, secret: &str) -> String {
     hex::encode(mac.finalize().into_bytes())
 }
 
-use reqwest::Method;
-
-use crate::error::BinanceError;
-
 pub async fn send_signed_request(
     client: &reqwest::Client,
     method: Method,
@@ -41,32 +41,49 @@ pub async fn send_signed_request(
         query_string.push('&');
     }
 
+    // recvWindow=5000
+    // Allows up to 5 seconds difference between request timestamp
+    // and Binance server time.
+    // Prevents -1021 timestamp errors caused by latency or small clock drift.
+    query_string.push_str(&format!("recvWindow={}", DEFAULT_RECV_WINDOW));
+    query_string.push('&');
     query_string.push_str(&format!("timestamp={}", timestamp));
 
     let signature = create_signature(&query_string, api_secret);
 
-    let url: String = format!("{}/{}", base_url, endpoint);
+    let url = format!(
+        "{}/{}?{}&signature={}",
+        base_url, endpoint, query_string, signature
+    );
 
-    let request = match method {
-        Method::GET => client.request(
-            method,
-            format!("{}?{}&signature={}", url, query_string, signature),
-        ),
-        _ => client
-            .request(method, url)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(format!("{}&signature={}", query_string, signature)),
-    };
+    let request = client.request(method, url);
 
     let response = request.header("X-MBX-APIKEY", api_key).send().await?;
 
+    let status = response.status();
     let text = response.text().await?;
 
-    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
-        return Ok(serde_json::to_string_pretty(&json)?);
+    if !status.is_success() {
+        return Err(BinanceError::Api(text));
     }
 
-    Ok(text)
+    let json: serde_json::Value = serde_json::from_str(&text).map_err(BinanceError::Json)?;
+
+    if let Some(code) = json.get("code").and_then(|c| c.as_i64())
+        && code < 0
+    {
+        return Err(BinanceError::Api(json.to_string()));
+    }
+
+    Ok(serde_json::to_string_pretty(&json)?)
+}
+
+pub fn build_query(params: &[(&str, String)]) -> String {
+    params
+        .iter()
+        .map(|(k, v)| format!("{}={}", k, v))
+        .collect::<Vec<_>>()
+        .join("&")
 }
 
 #[cfg(test)]

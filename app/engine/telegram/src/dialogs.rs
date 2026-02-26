@@ -165,10 +165,8 @@ pub async fn clear_dialogs(
                 peer.username(),
             ))
         })?;
-        if !ignore_users {
-            if let Peer::User(_) = peer {
-                continue;
-            }
+        if !ignore_users && let Peer::User(_) = peer {
+            continue;
         }
 
         client.mark_as_read(peer_ref).await?;

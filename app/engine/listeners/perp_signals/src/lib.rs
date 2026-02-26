@@ -18,8 +18,8 @@ pub async fn run(
 
     loop {
         match rx.recv().await {
-            Ok(event) => match event {
-                publisher::types::PulsgramEvent::Telegram(event) => {
+            Ok(event) => {
+                if let PulsgramEvent::Telegram(event) = event {
                     let message = event.message;
 
                     if message.peer_id().bare_id() != target_id {
@@ -49,8 +49,7 @@ pub async fn run(
                         }));
                     }
                 }
-                _ => {}
-            },
+            }
 
             Err(error) => {
                 if handle_recv_error("PerpSignals RecvError", error, &bus) {
