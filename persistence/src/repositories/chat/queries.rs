@@ -1,4 +1,4 @@
-//TODO: Never use select * in real code. This is good.
+// WHY: Never use select * in real code. This is good.
 pub const SELECT_ALL: &str = "SELECT id, name, chat_id FROM chats";
 
 pub const SELECT_BY_ID: &str = "SELECT id, name, chat_id FROM chats WHERE id = $1";

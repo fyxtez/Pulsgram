@@ -11,8 +11,10 @@ pub struct EventBus {
 }
 impl EventBus {
     pub fn publish(&self, event: PulsgramEvent) {
-        //TODO: Handle error maybe?
-        let _ = self.sender.send(event);
+        if let Err(_) = self.sender.send(event) {
+            eprintln!("EventBus: no active receivers");
+            println!("EventBus: no active receivers");
+        }
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<PulsgramEvent> {

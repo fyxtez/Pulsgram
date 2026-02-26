@@ -3,7 +3,7 @@
 use axum::http::Method;
 use tower_http::cors::{Any, CorsLayer};
 
-// TODO: When adding auth, replace Any with explicit origins and enable allow_credentials(true)
+// TODO/WHY: When adding auth, replace Any with explicit origins and enable allow_credentials(true)
 pub fn build_cors_layer() -> CorsLayer {
     CorsLayer::new()
         .allow_origin(Any)

@@ -36,7 +36,7 @@ pub async fn run(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-// TODO: This approach (JSON dump/restore) is a quick solution but not production-grade.
+// WHY: This approach (JSON dump/restore) is a quick solution but not production-grade.
 // The proper way to backup/restore a Postgres database is using pg_dump/psql:
 //
 // Backup:  pg_dump -U pulsgram_user -h localhost pulsgram > backup.sql
@@ -51,7 +51,7 @@ struct Dump {
 }
 
 #[allow(dead_code)]
-// TODO: (Not optimal but ok) Mapped errors of json and std::fs::write to Database errors.
+// WHY: (Not optimal but ok) Mapped errors of json and std::fs::write to Database errors.
 pub async fn dump_all(repos: &Repositories) -> Result<(), PersistenceError> {
     let dump = Dump {
         chats: repos.chat.get_all().await?,
