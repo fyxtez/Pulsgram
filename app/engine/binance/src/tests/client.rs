@@ -2,7 +2,8 @@
 mod tests {
     use serial_test::serial;
 
-    use crate::{client::{BinanceClient, OrderSide}, constants, error::BinanceError};
+    use crate::types::OrderSide;
+    use crate::{client::BinanceClient, constants, error::BinanceError};
 
     fn test_client(url: &str) -> BinanceClient {
         dotenv::from_filename("app/.env").ok();
@@ -196,24 +197,29 @@ mod tests {
     async fn test_set_position_mode() {
         let client = test_client(constants::TESTNET_FUTURES);
 
-        let current = client.get_position_mode().await.unwrap();
-
-        if current != false {
-            let result = client
-                .set_position_mode(false)
-                .await
-                .expect("failed to change position mode");
-
-            assert_eq!(result.code, 200);
-            assert_eq!(result.msg, "success");
-        }
-
+        // Get current mode
         let current = client
             .get_position_mode()
             .await
             .expect("failed to fetch position mode");
 
-        assert_eq!(current, false);
+        // If currently hedge mode, switch to one-way
+        if current.dual_side_position {
+            let result = client
+                .set_position_mode(false)
+                .await
+                .expect("failed to change position mode");
+
+            assert_eq!(result.dual_side_position, false);
+        }
+
+        // Verify final state
+        let current = client
+            .get_position_mode()
+            .await
+            .expect("failed to fetch position mode");
+
+        assert_eq!(current.dual_side_position, false);
     }
     #[tokio::test]
     #[ignore]

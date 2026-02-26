@@ -1,38 +1,24 @@
-use std::fmt;
-
 use crate::{
+    endpoints::{
+        ACCOUNT_INFO, COMMISSION_RATE, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER, POSITION_MODE,
+        POSITION_RISK,
+    },
     error::BinanceError,
     response_types::{
         FuturesAccountInfo, FuturesCommissionRateResponse, FuturesOrderResponse, ListenKeyResponse,
         PositionModeResponse, PositionRisk, SetLeverageResponse,
     },
+    types::OrderSide,
     utils::{build_query, send_signed_request},
 };
 use reqwest::Method;
+use serde::de::DeserializeOwned;
 
 pub struct BinanceClient {
     client: reqwest::Client,
     base_url: String,
     api_key: String,
     api_secret: String,
-}
-
-pub enum OrderSide {
-    Buy,
-    Sell,
-}
-
-impl fmt::Display for OrderSide {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                OrderSide::Buy => "BUY",
-                OrderSide::Sell => "SELL",
-            }
-        )
-    }
 }
 
 impl BinanceClient {
@@ -45,6 +31,63 @@ impl BinanceClient {
         }
     }
 
+    async fn signed_request<T>(
+        &self,
+        method: Method,
+        endpoint: &str,
+        query: String,
+    ) -> Result<T, BinanceError>
+    where
+        T: DeserializeOwned,
+    {
+        let raw = send_signed_request(
+            &self.client,
+            method,
+            &self.base_url,
+            endpoint,
+            &self.api_key,
+            &self.api_secret,
+            query,
+        )
+        .await?;
+
+        let parsed = serde_json::from_str::<T>(&raw)?;
+        Ok(parsed)
+    }
+
+    async fn api_key_request<T>(
+        &self,
+        method: Method,
+        endpoint: &str,
+        query: Option<String>,
+    ) -> Result<T, BinanceError>
+    where
+        T: DeserializeOwned,
+    {
+        let mut url = format!("{}/{}", self.base_url, endpoint);
+
+        if let Some(q) = query {
+            if !q.is_empty() {
+                url.push('?');
+                url.push_str(&q);
+            }
+        }
+
+        let response = self
+            .client
+            .request(method, &url)
+            .header("X-MBX-APIKEY", &self.api_key)
+            .send()
+            .await?;
+
+        let response = response.error_for_status()?; // 👈 important
+
+        let raw = response.text().await?;
+
+        let parsed = serde_json::from_str::<T>(&raw)?;
+        Ok(parsed)
+    }
+
     pub async fn get_open_orders(
         &self,
         symbol: Option<&str>,
@@ -53,27 +96,8 @@ impl BinanceClient {
             Some(sym) => build_query(&[("symbol", sym.to_owned())]),
             None => String::new(),
         };
-
-        let raw = send_signed_request(
-            &self.client,
-            Method::GET,
-            &self.base_url,
-            "fapi/v1/openOrders",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: Vec<FuturesOrderResponse> = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::GET, OPEN_ORDERS, query).await
     }
-
-    // newOrderRespType=RESULT
-    // Forces Binance to return the final execution result for MARKET orders.
-    // Without this, the API returns only ACK (orderId + clientOrderId),
-    // which does not include executedQty, avgPrice, or final status.
 
     pub async fn get_trading_fees(
         &self,
@@ -81,67 +105,31 @@ impl BinanceClient {
     ) -> Result<FuturesCommissionRateResponse, BinanceError> {
         let query = build_query(&[("symbol", symbol.to_owned())]);
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::GET,
-            &self.base_url,
-            "fapi/v1/commissionRate",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: FuturesCommissionRateResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::GET, COMMISSION_RATE, query)
+            .await
     }
+
     pub async fn get_account_info(&self) -> Result<FuturesAccountInfo, BinanceError> {
-        let raw = send_signed_request(
-            &self.client,
-            Method::GET,
-            &self.base_url,
-            "fapi/v3/account",
-            &self.api_key,
-            &self.api_secret,
-            String::new(),
-        )
-        .await?;
-
-        let parsed: FuturesAccountInfo = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::GET, ACCOUNT_INFO, String::new())
+            .await
     }
+
     pub async fn create_listen_key(&self) -> Result<String, BinanceError> {
-        let url = format!("{}/fapi/v1/listenKey", self.base_url);
+        let resp: ListenKeyResponse = self.api_key_request(Method::POST, LISTEN_KEY, None).await?;
 
-        let raw = self
-            .client
-            .post(&url)
-            .header("X-MBX-APIKEY", &self.api_key)
-            .send()
-            .await?
-            .text()
-            .await?;
-
-        let parsed: ListenKeyResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed.listen_key)
+        Ok(resp.listen_key)
     }
-    pub async fn close_listen_key(&self, listen_key: &str) -> Result<(), BinanceError> {
-        let url = format!(
-            "{}/fapi/v1/listenKey?listenKey={}",
-            self.base_url, listen_key
-        );
 
-        self.client
-            .delete(&url)
-            .header("X-MBX-APIKEY", &self.api_key)
-            .send()
+    pub async fn close_listen_key(&self, listen_key: &str) -> Result<(), BinanceError> {
+        let query = build_query(&[("listenKey", listen_key.to_string())]);
+
+        let _: serde_json::Value = self
+            .api_key_request(Method::DELETE, LISTEN_KEY, Some(query))
             .await?;
 
         Ok(())
     }
+
     pub async fn place_market_order(
         &self,
         symbol: &str,
@@ -165,20 +153,9 @@ impl BinanceClient {
             ("newOrderRespType", "RESULT".to_string()),
         ]);
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::POST,
-            &self.base_url,
-            "fapi/v1/order",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-        let parsed: FuturesOrderResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::POST, ORDER, query).await
     }
+
     pub async fn set_leverage(
         &self,
         symbol: &str,
@@ -189,21 +166,9 @@ impl BinanceClient {
             ("leverage", leverage.to_string()),
         ]);
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::POST,
-            &self.base_url,
-            "fapi/v1/leverage",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: SetLeverageResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::POST, LEVERAGE, query).await
     }
+
     pub async fn place_limit_order(
         &self,
         symbol: &str,
@@ -220,84 +185,36 @@ impl BinanceClient {
             ("timeInForce", "GTC".to_string()),
         ]);
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::POST,
-            &self.base_url,
-            "fapi/v1/order",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: FuturesOrderResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::POST, ORDER, query).await
     }
-    pub async fn get_position_mode(&self) -> Result<bool, BinanceError> {
-        let raw = send_signed_request(
-            &self.client,
-            Method::GET,
-            &self.base_url,
-            "fapi/v1/positionSide/dual",
-            &self.api_key,
-            &self.api_secret,
-            String::new(),
-        )
-        .await?;
 
-        let json: serde_json::Value = serde_json::from_str(&raw)?;
-
-        Ok(json["dualSidePosition"].as_bool().unwrap_or(false))
+    pub async fn get_position_mode(&self) -> Result<PositionModeResponse, BinanceError> {
+        self.signed_request(Method::GET, POSITION_MODE, String::new())
+            .await
     }
+
     pub async fn get_position_risk(
         &self,
         symbol: Option<&str>,
     ) -> Result<Vec<PositionRisk>, BinanceError> {
         let query = match symbol {
-            Some(s) => build_query(&[("symbol", s.to_owned())]),
+            Some(s) => build_query(&[("symbol", s.to_string())]),
             None => String::new(),
         };
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::GET,
-            &self.base_url,
-            "fapi/v3/positionRisk",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: Vec<PositionRisk> = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::GET, POSITION_RISK, query).await
     }
+
     pub async fn set_position_mode(
         &self,
         dual_side: bool,
     ) -> Result<PositionModeResponse, BinanceError> {
-        let mode = if dual_side { "true" } else { "false" };
+        let query = build_query(&[("dualSidePosition", dual_side.to_string())]);
 
-        let query = build_query(&[("dualSidePosition", mode.to_string())]);
-
-        let raw = send_signed_request(
-            &self.client,
-            Method::POST,
-            &self.base_url,
-            "fapi/v1/positionSide/dual",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: PositionModeResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::POST, POSITION_MODE, query)
+            .await
     }
+
     pub async fn cancel_order(
         &self,
         symbol: &str,
@@ -308,19 +225,6 @@ impl BinanceClient {
             ("orderId", order_id.to_string()),
         ]);
 
-        let raw = send_signed_request(
-            &self.client,
-            Method::DELETE,
-            &self.base_url,
-            "fapi/v1/order",
-            &self.api_key,
-            &self.api_secret,
-            query,
-        )
-        .await?;
-
-        let parsed: FuturesOrderResponse = serde_json::from_str(&raw)?;
-
-        Ok(parsed)
+        self.signed_request(Method::DELETE, ORDER, query).await
     }
 }

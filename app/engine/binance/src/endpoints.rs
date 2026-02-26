@@ -1,0 +1,8 @@
+pub const OPEN_ORDERS: &str = "fapi/v1/openOrders";
+pub const COMMISSION_RATE: &str = "fapi/v1/commissionRate";
+pub const ACCOUNT_INFO: &str = "fapi/v3/account";
+pub const ORDER: &str = "fapi/v1/order";
+pub const LEVERAGE: &str = "fapi/v1/leverage";
+pub const POSITION_MODE: &str = "fapi/v1/positionSide/dual";
+pub const POSITION_RISK: &str = "fapi/v3/positionRisk";
+pub const LISTEN_KEY: &str = "fapi/v1/listenKey";

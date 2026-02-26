@@ -68,10 +68,10 @@ pub struct FuturesAccountInfo {
     pub total_wallet_balance: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct PositionModeResponse {
-    pub code: i64,
-    pub msg: String,
+    #[serde(rename = "dualSidePosition")]
+    pub dual_side_position: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
