@@ -44,9 +44,22 @@ echo "All tests passed."
 # --------------------------
 # BUILD STEP
 # --------------------------
-echo "Building Rust project with production features..."
-cargo build --release --features production
+echo "Preparing build version..."
+# Get current git commit short hash.
+# This identifies exactly what source code is being deployed.
+BUILD_VERSION=$(git rev-parse --short HEAD)
+echo "Build version: $BUILD_VERSION"
 
+echo "Building Rust project with production features..."
+# Inject BUILD_VERSION only for this cargo build command.
+#
+# This makes BUILD_VERSION available at *compile time*.
+# Rust's `option_env!("BUILD_VERSION")` reads it during compilation
+# and embeds it directly into the binary.
+#
+# After this command finishes, BUILD_VERSION is NOT kept in the shell.
+# Used for get_build_version() function when bootstraping.
+BUILD_VERSION="$BUILD_VERSION" cargo build --release --features production
 echo "Build succeeded."
 
 # --------------------------

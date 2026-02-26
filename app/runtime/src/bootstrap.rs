@@ -1,16 +1,17 @@
-use core::panic;
 use std::sync::Arc;
 
-use crate::{config::Config, error::AppError, utils::create_reqwest_client};
+use crate::{
+    config::Config,
+    error::AppError,
+    utils::{create_reqwest_client, get_build_version},
+};
 use api::start_api_server;
 use app_state::AppState;
 use binance::client::BinanceClient;
 use publisher::EventBus;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
-    dialogs::{
-        build_peers_map_from_dialogs, clear_dialogs, load_dialogs, normalize_dialogs_into_data,
-    },
+    dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
     errors::TelegramError,
 };
 use telegram_types::{Client, PeerRef, UpdatesLike};
@@ -48,6 +49,9 @@ pub struct AppRuntime {
 }
 
 pub async fn bootstrap() -> Result<AppRuntime, AppError> {
+    let build_version = get_build_version();
+    println!("Build Version: {}", build_version);
+
     let config = Config::from_env(true)?;
 
     let ConnectClientReturnType {
