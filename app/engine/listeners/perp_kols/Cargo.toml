@@ -5,4 +5,6 @@ edition = "2024"
 
 [dependencies]
 publisher = { path = "../../publisher" }
+shared = {path = "../../shared"}
 telegram_types = { path = "../../telegram_types" }
+telegram = {path = "../../telegram"}

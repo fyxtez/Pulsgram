@@ -1,8 +1,7 @@
-use lazy_static::lazy_static;
 use publisher::types::{ErrorEvent, PulsgramEvent};
 use publisher::{EventBus, handle_recv_error};
-use regex::Regex;
-use std::sync::{Arc, OnceLock};
+use shared::{postprocess_html, remove_emojis};
+use std::sync::Arc;
 use telegram::media::extract_photo_url_from_raw;
 use telegram_types::PeerRef;
 use telegram_types::{Client, Message};
@@ -85,7 +84,6 @@ pub async fn handle_follow(
         return;
     }
 
-    // Production forwarding
     if cfg!(feature = "production") {
         let input_message = telegram_types::InputMessage::new()
             .html(final_html)
@@ -105,49 +103,9 @@ pub async fn handle_follow(
         }
     }
 }
-fn emoji_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-
-    RE.get_or_init(|| {
-        Regex::new(r"[\p{Emoji_Presentation}\p{Extended_Pictographic}]")
-            .expect("Invalid emoji regex")
-    })
-}
-
-pub fn remove_emojis(input: &str) -> std::borrow::Cow<'_, str> {
-    emoji_regex().replace_all(input, "")
-}
 
 fn simple_is_followed_check(message_text: &str) -> bool {
     let first_line = message_text.lines().next().unwrap_or("");
 
     first_line.contains("followed")
-}
-
-lazy_static! {
-    // Compiled once at startup.
-    // If these fail, it's a programmer error (invalid regex literal).
-    static ref RE_NULL: Regex =
-        Regex::new(r"(?i)\bnull\b").expect("Invalid RE_NULL regex");
-
-    static ref RE_BLANK_LINES: Regex =
-        Regex::new(r"\n[ \t]*\n").expect("Invalid RE_BLANK_LINES regex");
-
-    static ref RE_BQ_CLOSE: Regex =
-        Regex::new(r"[\s]+</blockquote>").expect("Invalid RE_BQ_CLOSE regex");
-
-    static ref RE_BQ_OPEN: Regex =
-        Regex::new(r"<blockquote>\s+").expect("Invalid RE_BQ_OPEN regex");
-}
-
-fn postprocess_html(html: &str) -> String {
-    RE_BQ_OPEN
-        .replace_all(
-            &RE_BQ_CLOSE.replace_all(
-                &RE_BLANK_LINES.replace_all(&RE_NULL.replace_all(html, ""), "\n"),
-                "</blockquote>",
-            ),
-            "<blockquote>",
-        )
-        .to_string()
 }

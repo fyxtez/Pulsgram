@@ -12,7 +12,6 @@ use publisher::EventBus;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
-    errors::TelegramError,
 };
 use telegram_types::{Client, PeerRef, UpdatesLike};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -33,8 +32,6 @@ pub struct WorkersConfig {
 
     pub rs_user_id: i64,
     pub lcs_user_id: i64,
-
-    pub fyxtez_peer_ref: PeerRef,
 }
 
 pub struct AppRuntime {
@@ -96,7 +93,6 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
         dbg!(dialogs_data_from_dispatcher);
     }
 
-    let mut peers_map = build_peers_map_from_dialogs(&dialogs).await;
     let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher).await;
 
     let errors_peer = peers_map_dispatcher
@@ -119,29 +115,20 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
         .remove(&config.perp_signals_test_chat_id)
         .ok_or(AppError::NotFound("perp_signals_test_chat_id"))?;
 
-    let perp_kols = peers_map
+    let perp_kols = peers_map_dispatcher
         .remove(&config.perp_kols_chat_id)
         .ok_or(AppError::NotFound("perp_kols_chat_id"))?;
 
-    let perp_kols_test = peers_map
+    let perp_kols_test = peers_map_dispatcher
         .remove(&config.perp_kols_test_chat_id)
         .ok_or(AppError::NotFound("perp_kols_test_chat_id"))?;
 
     let perp_kols_usernames: Vec<String> = config.perp_kols_usernames;
 
-    drop(peers_map);
     drop(peers_map_dispatcher);
 
     drop(dialogs);
     drop(dialogs_from_dispatcher);
-
-    let fyxtez_peer_ref = telegram::resolve_username(&client, "fyxtez")
-        .await?
-        .to_ref()
-        .await
-        .ok_or(AppError::Telegram(Box::new(TelegramError::Other(
-            String::from("Could not convert to PeerRef"),
-        ))))?;
 
     let reqwest_client = create_reqwest_client()?;
 
@@ -188,7 +175,6 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
 
             rs_user_id: config.rs_user_id,
             lcs_user_id: config.lcs_user_id,
-            fyxtez_peer_ref,
         },
         _binance_client: binance_client,
     })
@@ -232,9 +218,7 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
 
     tokio::spawn(perp_kols::run(
         Arc::clone(&runtime.bus),
-        // TODO: change this to dispatcher after wolfy answers the bot problem.
-        Arc::clone(&runtime.client),
-        runtime.workers.fyxtez_peer_ref,
+        Arc::clone(&runtime.client_dispatcher),
         runtime.workers.rs_user_id,
         if cfg!(feature = "production") {
             runtime.workers.perp_kols_prod

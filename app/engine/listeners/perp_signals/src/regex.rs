@@ -57,27 +57,31 @@ pub fn remove_emojis(input: &str) -> std::borrow::Cow<'_, str> {
 pub fn format_signal(signal: &TradingSignal) -> String {
     let direction = if signal.is_long { "LONG" } else { "SHORT" };
 
-    let entry_low = signal.entry;
-    let entry_high = signal.entry;
-
-    let Some(tp3) = signal.targets.last() else {
+    let Some(_) = signal.targets.last() else {
         return String::from("Invalid signal: missing targets");
     };
 
-    let target_low = tp3;
-    let target_high = tp3;
+    let entry = signal.entry;
+
+    let target = &signal.targets;
 
     let stop_loss = signal.stop_loss;
 
     format!(
-        "<b>{} {}</b>\n<b>Timeframe:</b> {}\n<b>Entry:</b> {:.3}-{:.3}\n<b>Target:</b> {:.3}-{:.3}\n<b>Stop:</b> {}\n",
+        "<b>{} {}</b>\n\
+<b>Timeframe:</b> {}\n\
+<b>Entry:</b> {:.5}\n\
+<b>Take Profit 1:</b> {:.5}\n\
+<b>Take Profit 2:</b> {:.5}\n\
+<b>Take Profit 3:</b> {:.5}\n\
+<b>Stop:</b> {:.5}\n",
         signal.symbol,
         direction,
         signal.timeframe,
-        entry_low,
-        entry_high,
-        target_low,
-        target_high,
+        entry,
+        target.first().copied().unwrap_or_default(),
+        target.get(1).copied().unwrap_or_default(),
+        target.get(2).copied().unwrap_or_default(),
         stop_loss,
     )
 }

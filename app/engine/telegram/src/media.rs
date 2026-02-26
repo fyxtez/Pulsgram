@@ -12,18 +12,26 @@ pub async fn save_photo(
 }
 
 pub fn extract_photo_url_from_raw(update: &tl::enums::Update) -> Option<String> {
+    // Only handle new incoming messages.
+    // Ignore edits, deletes, and other update types.
     let tl::enums::Update::NewMessage(u) = update else {
         return None;
     };
-
+    // Extract the actual message content.
     let tl::enums::Message::Message(msg) = &u.message else {
         return None;
     };
 
+    // Check if the message contains a WebPage media attachment.
+    // Telegram automatically attaches this when a message contains a URL
+    // that generates a link preview.
     let Some(tl::enums::MessageMedia::WebPage(wp)) = &msg.media else {
         return None;
     };
 
+    //  Extract the original URL used to generate the preview.
+    // WebPage::Pending appears when Telegram is still fetching metadata.
+    // WebPage::Page appears when the preview is fully resolved.
     match &wp.webpage {
         tl::enums::WebPage::Pending(pending) => pending.url.clone(),
         tl::enums::WebPage::Page(page) => Some(page.url.clone()),

@@ -1,7 +1,6 @@
 **/target
 .env
 *.session
-todo.md
-aws.md
-route.md
+GRAMMERS_PEERREF_CHANNEL_INVALID.md
 binance/todo.md
+/_notes

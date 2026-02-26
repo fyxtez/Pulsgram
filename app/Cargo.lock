@@ -1310,9 +1310,9 @@ dependencies = [
 name = "kol_follows"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "publisher",
  "regex",
+ "shared",
  "telegram",
  "telegram_types",
 ]
@@ -1798,6 +1798,8 @@ name = "perp_kols"
 version = "0.1.0"
 dependencies = [
  "publisher",
+ "shared",
+ "telegram",
  "telegram_types",
 ]
 
@@ -2427,6 +2429,13 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest",
+]
+
+[[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "regex",
 ]
 
 [[package]]
