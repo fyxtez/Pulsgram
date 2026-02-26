@@ -1807,7 +1807,6 @@ dependencies = [
 name = "perp_signals"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "publisher",
  "regex",
  "telegram_types",

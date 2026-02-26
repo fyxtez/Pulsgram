@@ -12,8 +12,6 @@ pub async fn run(
     perp_kols_peer: PeerRef,
     target_kols: Vec<String>,
 ) {
-    let me = dispatcher.get_me().await.unwrap();
-    dbg!(me);
     println!("KOL Perp Signals running...");
 
     let mut rx = bus.subscribe();
