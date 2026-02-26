@@ -147,3 +147,32 @@ pub fn normalize_dialogs_into_data(dialogs: &[Dialog]) -> dashmap::DashMap<i64, 
 
     dialogs_data
 }
+
+//. TODO: Endpoint
+pub async fn clear_dialogs(
+    client: &Client,
+    dialogs: &[Dialog],
+    ignore_users: bool,
+) -> Result<(), TelegramError> {
+    for dialog in dialogs {
+        let peer = dialog.peer();
+
+        let peer_ref = peer.to_ref().await.ok_or_else(|| {
+            TelegramError::Other(format!(
+                "Could not convert to peer ref | id={} name='{}' username={:?}",
+                peer.id(),
+                peer.name().unwrap_or("Peer has no name."),
+                peer.username(),
+            ))
+        })?;
+        if !ignore_users {
+            if let Peer::User(_) = peer {
+                continue;
+            }
+        }
+
+        client.mark_as_read(peer_ref).await?;
+    }
+
+    Ok(())
+}

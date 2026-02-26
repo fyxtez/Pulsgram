@@ -18,9 +18,7 @@ pub async fn get_me(client: &Client) -> Result<User, TelegramError> {
 pub async fn resolve_username(client: &Client, username: &str) -> Result<Peer, TelegramError> {
     let peer = client.resolve_username(username).await?;
     match peer {
-        Some(peer) => {
-            Ok(peer)
-        }
+        Some(peer) => Ok(peer),
         None => {
             return Err(TelegramError::Other(format!(
                 "Could not resolve username: {}",

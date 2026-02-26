@@ -2,3 +2,5 @@
 .env
 *.session
 todo.md
+aws.md
+route.md

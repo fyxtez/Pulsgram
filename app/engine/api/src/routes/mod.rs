@@ -28,10 +28,11 @@ fn _routes() -> Router {
     Router::new().route("/ping", get(ping))
 }
 
+//TODO: Shared
 pub async fn fallback(req: Request<Body>) -> impl IntoResponse {
     let path = req.uri().path();
     (
         StatusCode::NOT_FOUND,
-        format!("That endpoint '{}' is not in our API.", path),
+        format!("Endpoint '{}' is not in our API.", path),
     )
 }

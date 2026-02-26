@@ -142,10 +142,7 @@ pub async fn toggle_mute_peer(
     peer: &Peer,
     mute: bool,
 ) -> Result<(), InvocationError> {
-    let peer_ref = peer
-        .to_ref()
-        .await
-        .ok_or(InvocationError::Dropped)?;
+    let peer_ref = peer.to_ref().await.ok_or(InvocationError::Dropped)?;
     let input_peer: InputPeer = peer_ref.into();
 
     let notify_peer =
