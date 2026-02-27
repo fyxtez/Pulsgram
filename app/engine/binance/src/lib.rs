@@ -1,10 +1,10 @@
 pub mod client;
 pub mod constants;
+pub mod endpoints;
 pub mod error;
 mod response_types;
-pub mod utils;
 pub mod types;
-pub mod endpoints;
+pub mod utils;
 
 #[cfg(test)]
 mod tests;

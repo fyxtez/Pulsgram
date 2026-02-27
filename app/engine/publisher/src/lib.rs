@@ -11,7 +11,7 @@ pub struct EventBus {
 }
 impl EventBus {
     pub fn publish(&self, event: PulsgramEvent) {
-        if let Err(_) = self.sender.send(event) {
+        if self.sender.send(event).is_err() {
             eprintln!("EventBus: no active receivers");
             println!("EventBus: no active receivers");
         }

@@ -63,6 +63,29 @@ BUILD_VERSION="$BUILD_VERSION" cargo build --release --features production
 echo "Build succeeded."
 
 # --------------------------
+# BINARY SIZE INFO
+# --------------------------
+if [ -f "$LOCAL_FILE" ]; then
+    echo "Calculating binary size..."
+
+    # Human readable size (MB/GB automatically)
+    HUMAN_SIZE=$(du -h "$LOCAL_FILE" | cut -f1)
+
+    # Exact size in bytes
+    BYTES_SIZE=$(stat -c%s "$LOCAL_FILE")
+
+    # Size in MB with decimals
+    MB_SIZE=$(awk "BEGIN {printf \"%.2f\", $BYTES_SIZE/1024/1024}")
+
+    echo "Binary size:"
+    echo "   • Human readable: $HUMAN_SIZE"
+    echo "   • Exact bytes:    $BYTES_SIZE bytes"
+    echo "   • In MB:          $MB_SIZE MB"
+else
+    echo "Warning: Built binary not found at $LOCAL_FILE"
+fi
+
+# --------------------------
 # DEPLOYMENT STEP
 # --------------------------
 echo "Stopping service before deploy..."

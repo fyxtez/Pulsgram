@@ -66,11 +66,10 @@ impl BinanceClient {
     {
         let mut url = format!("{}/{}", self.base_url, endpoint);
 
-        if let Some(q) = query {
-            if !q.is_empty() {
+        if let Some(q) = query && 
+            !q.is_empty() {
                 url.push('?');
                 url.push_str(&q);
-            }
         }
 
         let response = self
@@ -193,6 +192,7 @@ impl BinanceClient {
             .await
     }
 
+    // Get current position information(only symbol that has position or open orders will be returned).
     pub async fn get_position_risk(
         &self,
         symbol: Option<&str>,
