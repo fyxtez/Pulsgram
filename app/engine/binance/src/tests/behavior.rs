@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod integration_trade_flow {
+    use domain::OrderSide;
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
-    use crate::types::OrderSide;
     use crate::{client::BinanceClient, constants};
 
     fn test_client(url: &str) -> BinanceClient {

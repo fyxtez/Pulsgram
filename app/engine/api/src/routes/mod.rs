@@ -1,5 +1,6 @@
 mod cors;
 mod ping;
+mod dev;
 
 use axum::{
     Extension, Router,
@@ -25,7 +26,13 @@ fn routes() -> Router {
 }
 
 fn _routes() -> Router {
-    Router::new().route("/ping", get(ping))
+    let router = Router::new()
+        .route("/ping", get(ping));
+
+    #[cfg(not(feature = "production"))]
+    let router = router.nest("/dev", dev::routes());
+
+    router
 }
 
 //TODO: Shared

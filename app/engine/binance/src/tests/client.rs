@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
+    use domain::OrderSide;
     use serial_test::serial;
 
-    use crate::types::OrderSide;
     use crate::utils::build_query;
     use crate::{client::BinanceClient, constants, error::BinanceError};
 

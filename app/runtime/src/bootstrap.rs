@@ -148,6 +148,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
         client: client.clone(),
         client_dispatcher: client_dispatcher.clone(),
         reqwest_client: reqwest_client.clone(),
+        bus:bus.clone()
     };
 
     let shared_state = Arc::new(state);
@@ -227,6 +228,8 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         },
         runtime.workers.perp_kols_usernames,
     ));
+
+    tokio::spawn(trade_executor::run(runtime.bus.clone()));
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"

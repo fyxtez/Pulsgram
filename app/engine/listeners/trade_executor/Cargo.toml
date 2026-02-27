@@ -1,11 +1,9 @@
 [package]
-name = "perp_signals"
+name = "trade_executor"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 publisher = { path = "../../publisher" }
-regex = "1.12.3"
 telegram_types = { path = "../../telegram_types" }
 unicode-segmentation = "1.12.0"
-domain = {path = "../../domain"}

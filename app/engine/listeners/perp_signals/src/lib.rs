@@ -1,5 +1,6 @@
 mod regex;
 
+use domain::{TradeApproved, TradeIntent};
 use publisher::types::{ErrorEvent, PulsgramEvent};
 use publisher::{EventBus, handle_recv_error};
 use std::sync::Arc;
@@ -32,7 +33,19 @@ pub async fn run(
                         continue;
                     };
 
+                    let symbol = signal.symbol.clone();
+
+                    let intent = TradeIntent::new(symbol.clone(), signal.is_long.into());
+
+                    let approved = TradeApproved {
+                        intent_id: intent.intent_id,
+                        symbol,
+                        side: intent.side,
+                    };
+
                     let formatted_signal = format_signal(&signal);
+
+                    bus.publish(PulsgramEvent::TradeApproved(approved));
 
                     let input_message = InputMessage::new().html(formatted_signal);
 

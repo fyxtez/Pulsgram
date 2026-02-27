@@ -8,3 +8,4 @@ dashmap = "6.1.0"
 telegram = {path = "../telegram"}
 telegram_types = {path = "../telegram_types"}
 reqwest = { version = "0.13", default-features = false } #TODO: Just needed for a type. Should be a part of global types in engine.
+publisher = {path = "../publisher"}

@@ -8,9 +8,9 @@ use crate::{
         FuturesAccountInfo, FuturesCommissionRateResponse, FuturesOrderResponse, ListenKeyResponse,
         PositionModeResponse, PositionRisk, SetLeverageResponse,
     },
-    types::OrderSide,
     utils::{build_query, send_signed_request},
 };
+use domain::OrderSide;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 

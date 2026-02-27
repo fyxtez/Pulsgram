@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod integration_trade_flow {
+    use domain::OrderSide;
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
-    use crate::types::OrderSide;
     use crate::{client::BinanceClient, constants};
 
     fn test_client(url: &str) -> BinanceClient {
@@ -51,24 +51,6 @@ mod integration_trade_flow {
                     .await
                     .expect("failed to cleanup short position");
             }
-        }
-    }
-
-    async fn assert_flat_position(client: &BinanceClient, symbol: &str) {
-        let positions = client
-            .get_position_risk(Some(symbol))
-            .await
-            .expect("failed to fetch position risk");
-
-        // If Binance returns empty list → account is flat
-        if positions.is_empty() {
-            return;
-        }
-
-        // If symbol entry exists, ensure size is zero
-        if let Some(pos) = positions.into_iter().find(|p| p.symbol == symbol) {
-            let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
-            assert_eq!(amt, 0.0, "Position not flat");
         }
     }
 
