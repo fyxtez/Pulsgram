@@ -1,4 +1,4 @@
-use domain::{TradeApproved, TradeIntent, TradeRejected};
+use domain::types::trade::{TradeApproved, TradeRejected};
 use telegram_types::Message;
 
 #[derive(Debug, Clone)]
@@ -61,7 +61,6 @@ pub struct TradeEvent {
 pub enum PulsgramEvent {
     Telegram(TgEvent),
     Error(ErrorEvent),
-    TradeIntentCreated(TradeIntent),
     TradeApproved(TradeApproved),
     TradeRejected(TradeRejected),
 }

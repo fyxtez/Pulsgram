@@ -65,8 +65,8 @@ pub struct PositionModeResponse {
     pub dual_side_position: bool,
 }
 
-    #[derive(Debug, serde::Deserialize)]
-    #[serde(rename_all = "camelCase")]
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PositionRisk {
     pub symbol: String,
     pub position_side: String, // BOTH, LONG, SHORT

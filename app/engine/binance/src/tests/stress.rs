@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod integration_trade_flow {
-    use domain::OrderSide;
+    use domain::types::order_side::OrderSide;
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 

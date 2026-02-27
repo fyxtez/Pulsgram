@@ -1,6 +1,7 @@
 mod regex;
 
-use domain::{TradeApproved, TradeIntent};
+use domain::types::trade::TradeApproved;
+use domain::types::trade_intent::TradeIntent;
 use publisher::types::{ErrorEvent, PulsgramEvent};
 use publisher::{EventBus, handle_recv_error};
 use std::sync::Arc;
@@ -33,19 +34,33 @@ pub async fn run(
                         continue;
                     };
 
-                    let symbol = signal.symbol.clone();
+                    let symbol = &signal.symbol;
 
-                    let intent = TradeIntent::new(symbol.clone(), signal.is_long.into());
-
-                    let approved = TradeApproved {
-                        intent_id: intent.intent_id,
-                        symbol,
-                        side: intent.side,
+                    let intent = match TradeIntent::builder(symbol)
+                        .entry(signal.entry)
+                        .side(signal.is_long.into())
+                        .stop_loss(signal.stop_loss)
+                        .targets(&signal.targets)
+                        .timeframe(&signal.timeframe)
+                        .build()
+                    {
+                        Ok(trade) => trade,
+                        Err(error) => {
+                            bus.publish(PulsgramEvent::Error(ErrorEvent {
+                                source: "Perp Signals",
+                                message_text: format!("Error creating trade intent: {}", error),
+                            }));
+                            continue;
+                        }
                     };
 
-                    let formatted_signal = format_signal(&signal);
+                    // TODO: Move approval in risk manager.
+                    // intent.approve() -> self.into -> TradeApproved
+                    let approved: TradeApproved = intent.into();
 
                     bus.publish(PulsgramEvent::TradeApproved(approved));
+
+                    let formatted_signal = format_signal(&signal);
 
                     let input_message = InputMessage::new().html(formatted_signal);
 

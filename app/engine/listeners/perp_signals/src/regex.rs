@@ -1,9 +1,10 @@
+use domain::types::symbol::Symbol;
 use regex::Regex;
 use std::sync::OnceLock;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TradingSignal {
-    pub symbol: String,
+    pub symbol: Symbol,
     pub is_long: bool, // true = LONG, false = SHORT
     pub entry: f64,
     pub targets: Vec<f64>,
@@ -91,12 +92,7 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
 
     let cleaned_text = re.disclaimer.replace_all(text, "");
 
-    let symbol = re
-        .symbol
-        .captures(&cleaned_text)?
-        .get(1)?
-        .as_str()
-        .to_string();
+    let symbol = re.symbol.captures(&cleaned_text)?.get(1)?.as_str();
 
     let direction_str = re.direction.captures(&cleaned_text)?.get(1)?.as_str();
 
@@ -134,6 +130,11 @@ pub fn parse_trading_signal(text: &str) -> Option<TradingSignal> {
     if targets.is_empty() {
         return None;
     }
+
+    let symbol = match symbol.parse::<Symbol>() {
+        Ok(val) => val,
+        Err(_) => return None,
+    };
 
     Some(TradingSignal {
         symbol,

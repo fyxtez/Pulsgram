@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use domain::OrderSide;
+    use domain::types::order_side::OrderSide;
     use serial_test::serial;
 
     use crate::utils::build_query;
@@ -263,13 +263,9 @@ mod tests {
         assert!(result.is_err());
     }
 
-
     #[test]
     fn test_build_query_multiple_params() {
-        let query = build_query(&[
-            ("symbol", "BTCUSDT".to_string()),
-            ("side", "BUY".to_string()),
-        ]);
+        let query = build_query(&[("symbol", "BTCUSDT".into()), ("side", "BUY".to_string())]);
 
         assert!(query.contains("symbol=BTCUSDT"));
         assert!(query.contains("side=BUY"));

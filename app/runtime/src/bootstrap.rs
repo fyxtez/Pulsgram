@@ -148,7 +148,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
         client: client.clone(),
         client_dispatcher: client_dispatcher.clone(),
         reqwest_client: reqwest_client.clone(),
-        bus:bus.clone()
+        bus: bus.clone(),
     };
 
     let shared_state = Arc::new(state);

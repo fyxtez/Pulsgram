@@ -10,7 +10,7 @@ use crate::{
     },
     utils::{build_query, send_signed_request},
 };
-use domain::OrderSide;
+use domain::types::order_side::OrderSide;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 
