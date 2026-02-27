@@ -13,69 +13,60 @@ pub struct FuturesCommissionRateResponse {
 #[serde(rename_all = "camelCase")]
 pub struct FuturesAsset {
     pub asset: String,
-    pub wallet_balance: String,
-    pub unrealized_profit: String,
-    pub margin_balance: String,
-    pub maint_margin: String,
-    pub initial_margin: String,
-    pub position_initial_margin: String,
-    pub open_order_initial_margin: String,
-    pub cross_wallet_balance: String,
-    pub cross_un_pnl: String,
-    pub available_balance: String,
-    pub max_withdraw_amount: String,
-    pub margin_available: Option<bool>,
-    pub update_time: i64,
+
+    #[serde(default)]
+    pub wallet_balance: Option<String>,
+
+    #[serde(default)]
+    pub unrealized_profit: Option<String>,
+
+    #[serde(flatten)]
+    pub _extra: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FuturesPosition {
     pub symbol: String,
-    pub initial_margin: String,
-    pub maint_margin: String,
-    pub unrealized_profit: String,
-    pub position_initial_margin: String,
-    pub open_order_initial_margin: String,
-    pub leverage: String,
-    pub isolated: bool,
-    pub entry_price: String,
-    pub max_notional: String,
-    pub bid_notional: String,
-    pub ask_notional: String,
-    pub position_side: String,
-    pub position_amt: String,
-    pub update_time: i64,
+
+    #[serde(default)]
+    pub position_amt: Option<String>,
+
+    #[serde(default)]
+    pub entry_price: Option<String>,
+
+    #[serde(default)]
+    pub unrealized_profit: Option<String>,
+
+    #[serde(flatten)]
+    pub _extra: serde_json::Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FuturesAccountInfo {
+    pub total_wallet_balance: String,
+
+    #[serde(default)]
+    pub available_balance: Option<String>,
+
+    #[serde(default)]
     pub assets: Vec<FuturesAsset>,
+
+    #[serde(default)]
     pub positions: Vec<FuturesPosition>,
 
-    pub available_balance: String,
-    pub max_withdraw_amount: String,
-
-    pub total_cross_un_pnl: String,
-    pub total_cross_wallet_balance: String,
-    pub total_initial_margin: String,
-    pub total_maint_margin: String,
-    pub total_margin_balance: String,
-    pub total_open_order_initial_margin: String,
-    pub total_position_initial_margin: String,
-    pub total_unrealized_profit: String,
-    pub total_wallet_balance: String,
+    #[serde(flatten)]
+    pub _extra: serde_json::Value,
 }
-
 #[derive(Debug, Deserialize)]
 pub struct PositionModeResponse {
     #[serde(rename = "dualSidePosition")]
     pub dual_side_position: bool,
 }
 
-#[derive(Debug, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+    #[derive(Debug, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
 pub struct PositionRisk {
     pub symbol: String,
     pub position_side: String, // BOTH, LONG, SHORT
