@@ -37,21 +37,31 @@ mod tests {
     #[tokio::test]
     #[ignore]
     #[serial(binance)]
-    // TODO: fix the test
     async fn test_get_account_info() {
-        // let client = test_client(constants::TESTNET_FUTURES);
+        let client = test_client(constants::TESTNET_FUTURES);
 
-        // let account = client
-        //     .get_account_info()
-        //     .await
-        //     .expect("Expected account info response");
+        let account = client
+            .get_account_info()
+            .await
+            .expect("Expected account info response");
 
-        // assert!(!account.assets.is_empty());
+        assert!(!account.assets.is_empty());
 
-        // assert!(
-        //     account.assets.iter().any(|a| a.asset == "USDT"),
-        //     "USDT asset not found in account"
-        // );
+        assert!(
+            account.assets.iter().any(|a| a.asset == "USDT"),
+            "USDT asset not found in account"
+        );
+    }
+
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_account_info() {
+        let client = test_client(constants::TESTNET_FUTURES);
+
+        let account = client.get_account_info().await.unwrap();
+
+        assert!(account.total_wallet_balance.parse::<f64>().unwrap() >= 0.0);
     }
 
     #[tokio::test]
@@ -120,18 +130,17 @@ mod tests {
     async fn test_set_leverage() {
         let client = test_client(constants::TESTNET_FUTURES);
 
-        let result = client.set_leverage("BTCUSDT", 33).await;
+        let result = client.set_leverage("BTCUSDT", 5).await;
 
         match result {
             Ok(response) => {
                 assert_eq!(response.symbol, "BTCUSDT");
-                assert_eq!(response.leverage, 33);
+                assert_eq!(response.leverage, 5);
             }
 
             Err(BinanceError::Api(msg)) => {
                 println!("Leverage change failed: {}", msg);
 
-                // Accept known Binance testnet instability
                 assert!(
                     msg.contains("-1000"),
                     "Unexpected Binance API error: {}",
@@ -240,6 +249,20 @@ mod tests {
             assert_eq!(pos.symbol, "BTCUSDT");
         }
     }
+
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_invalid_quantity() {
+        let client = test_client(constants::TESTNET_FUTURES);
+
+        let result = client
+            .place_market_order("BTCUSDT", &OrderSide::Buy, "invalid")
+            .await;
+
+        assert!(result.is_err());
+    }
+
 
     #[test]
     fn test_build_query_multiple_params() {

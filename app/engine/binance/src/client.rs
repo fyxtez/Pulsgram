@@ -66,10 +66,11 @@ impl BinanceClient {
     {
         let mut url = format!("{}/{}", self.base_url, endpoint);
 
-        if let Some(q) = query && 
-            !q.is_empty() {
-                url.push('?');
-                url.push_str(&q);
+        if let Some(q) = query
+            && !q.is_empty()
+        {
+            url.push('?');
+            url.push_str(&q);
         }
 
         let response = self
@@ -226,5 +227,71 @@ impl BinanceClient {
         ]);
 
         self.signed_request(Method::DELETE, ORDER, query).await
+    }
+
+    pub async fn close_percentage(&self, symbol: &str, percent: f64) -> Result<(), BinanceError> {
+        assert!(percent > 0.0 && percent <= 100.0);
+
+        let positions = self.get_position_risk(Some(symbol)).await?;
+
+        let pos = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol)
+            .ok_or_else(|| BinanceError::InvalidInput("Position not found".into()))?;
+
+        let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
+
+        if amt == 0.0 {
+            return Ok(());
+        }
+
+        let raw = amt.abs() * percent / 100.0;
+
+        // round DOWN to 3 decimals (BTC precision)
+        let close_qty = (raw * 1000.0).floor() / 1000.0;
+
+        if close_qty <= 0.0 {
+            // If requested percentage is too small to meet step size,
+            // close full position instead to avoid dust leftovers.
+            return self.close_full_position(symbol).await;
+        }
+
+        let close_qty = format!("{:.3}", close_qty);
+
+        let side = if amt > 0.0 {
+            OrderSide::Sell
+        } else {
+            OrderSide::Buy
+        };
+
+        self.place_market_order(symbol, &side, &close_qty).await?;
+
+        Ok(())
+    }
+
+    pub async fn close_full_position(&self, symbol: &str) -> Result<(), BinanceError> {
+        let positions = self.get_position_risk(Some(symbol)).await?;
+
+        let pos = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol)
+            .ok_or_else(|| BinanceError::InvalidInput("Position not found".into()))?;
+
+        let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
+
+        if amt == 0.0 {
+            return Ok(());
+        }
+
+        let side = if amt > 0.0 {
+            OrderSide::Sell
+        } else {
+            OrderSide::Buy
+        };
+
+        self.place_market_order(symbol, &side, &amt.abs().to_string())
+            .await?;
+
+        Ok(())
     }
 }

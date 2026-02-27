@@ -214,6 +214,94 @@ mod integration_trade_flow {
         // Should now be short 0.01
         assert_eq!(position_amt, -0.01_f64);
     }
+
+    //TODO:
+    // ERROR: Order's notional must be no smaller than 100 means:
+    // price * quantity >= 100 USDT
+    // price = 1000
+    // qty = 0.01
+    // = 10 USDT
+    // Too low.
+
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_limit_and_cancel() {
+        let client = test_client(constants::TESTNET_FUTURES);
+        let symbol = "BTCUSDT";
+
+        cleanup_position(&client, symbol).await;
+
+        let order = client
+            // .place_limit_order(symbol, &OrderSide::Buy, "0.01", "1000") // TODO:unrealistic price
+            .place_limit_order(symbol, &OrderSide::Buy, "0.01", "50000")
+            .await
+            .unwrap();
+
+        sleep(Duration::from_secs(2)).await;
+
+        client.cancel_order(symbol, order.order_id).await.unwrap();
+
+        let open_orders = client.get_open_orders(Some(symbol)).await.unwrap();
+
+        assert!(open_orders.is_empty());
+    }
+
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_close_percentage() {
+        let client = test_client(constants::TESTNET_FUTURES);
+        let symbol = "BTCUSDT";
+
+        cleanup_position(&client, symbol).await;
+
+        client
+            .place_market_order(symbol, &OrderSide::Buy, "0.05")
+            .await
+            .unwrap();
+        sleep(Duration::from_secs(2)).await;
+
+        client.close_percentage(symbol, 20.0).await.unwrap();
+        sleep(Duration::from_secs(2)).await;
+
+        let positions = client.get_position_risk(Some(symbol)).await.unwrap();
+        let pos = positions.into_iter().find(|p| p.symbol == symbol).unwrap();
+        let amt: f64 = pos.position_amt.parse().unwrap();
+
+        assert_eq!(amt, 0.04_f64);
+    }
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_min_quantity_precision() {
+        let client = test_client(constants::TESTNET_FUTURES);
+        let symbol = "BTCUSDT";
+
+        cleanup_position(&client, symbol).await;
+
+        let result = client
+            .place_market_order(symbol, &OrderSide::Buy, "0.002")
+            .await;
+
+        assert!(result.is_ok());
+
+        cleanup_position(&client, symbol).await;
+    }
+
+    #[tokio::test]
+    #[ignore]
+    #[serial(binance)]
+    async fn test_invalid_precision_rejected() {
+        let client = test_client(constants::TESTNET_FUTURES);
+        let symbol = "BTCUSDT";
+
+        let result = client
+            .place_market_order(symbol, &OrderSide::Buy, "0.0000001")
+            .await;
+
+        assert!(result.is_err());
+    }
 }
 
 // TODO; Test zatvori poziciju tipa 50%
