@@ -13,14 +13,9 @@ pub async fn run(client: Arc<Client>, to_peer: PeerRef, bus: Arc<publisher::Even
             Ok(event) => match event {
                 publisher::types::PulsgramEvent::Error(error_event) => {
                     let error_message = error_event.message_text;
+                    let error_source = error_event.source;
 
-                    error::report_error(
-                        &client,
-                        to_peer,
-                        "Errors Reporter Listener::Ok",
-                        &error_message,
-                    )
-                    .await;
+                    error::report_error(&client, to_peer, error_source, &error_message).await;
                 }
                 _ => continue,
             },

@@ -6,8 +6,14 @@ pub enum BinanceError {
     Http(reqwest::Error),
     Json(serde_json::Error),
     MissingField(&'static str),
-    Api(String),
+    Api (BinanceApiErrorResponse),
     InvalidInput(String),
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BinanceApiErrorResponse {
+    pub code: i64,
+    pub msg: String,
 }
 
 impl Display for BinanceError {
@@ -18,7 +24,15 @@ impl Display for BinanceError {
             BinanceError::MissingField(field) => {
                 write!(f, "Missing field in response: {}", field)
             }
-            BinanceError::Api(msg) => write!(f, "Binance API error: {}", msg),
+           BinanceError::Api(api_err) => {
+                write!(
+                    f,
+                    "Binance API error ({}): {}",
+                    api_err.code,
+                    api_err.msg
+                )
+            }
+
             BinanceError::InvalidInput(msg) => write!(f, "Binance API error: {}", msg),
         }
     }

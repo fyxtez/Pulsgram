@@ -2819,6 +2819,8 @@ dependencies = [
 name = "trade_executor"
 version = "0.1.0"
 dependencies = [
+ "binance",
+ "domain",
  "publisher",
  "telegram_types",
  "unicode-segmentation",

@@ -1,4 +1,4 @@
-use crate::error::BinanceError;
+use crate::error::{BinanceApiErrorResponse, BinanceError};
 use hmac::{Hmac, Mac};
 use reqwest::Method;
 use sha2::Sha256;
@@ -62,12 +62,21 @@ pub async fn send_signed_request(
         .send()
         .await?;
 
-
     let status = response.status();
-    
+
     if !status.is_success() {
-        let err_text = response.text().await?;
-        return Err(BinanceError::Api(err_text));
+        let body = response.text().await?;
+
+        // Try parsing structured Binance error
+        if let Ok(api_err) = serde_json::from_str::<BinanceApiErrorResponse>(&body) {
+            return Err(BinanceError::Api(api_err));
+        }
+
+        // Fallback if Binance returns something unexpected
+        return Err(BinanceError::Api(BinanceApiErrorResponse {
+            code: -1,
+            msg: body,
+        }));
     }
 
     Ok(response)

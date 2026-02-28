@@ -116,17 +116,21 @@ mod tests {
 
         match result {
             Ok(response) => {
-                assert_eq!(response.symbol,Symbol::BTC.to_string());
+                assert_eq!(response.symbol, Symbol::BTC.to_string());
                 assert_eq!(response.leverage, 5);
             }
 
-            Err(BinanceError::Api(msg)) => {
-                println!("Leverage change failed: {}", msg);
+            Err(BinanceError::Api(api_err)) => {
+                println!(
+                    "Leverage change failed: code={} msg={}",
+                    api_err.code, api_err.msg
+                );
 
                 assert!(
-                    msg.contains("-1000"),
-                    "Unexpected Binance API error: {}",
-                    msg
+                    api_err.code == -1000,
+                    "Unexpected Binance API error: {} ({})",
+                    api_err.msg,
+                    api_err.code
                 );
             }
 

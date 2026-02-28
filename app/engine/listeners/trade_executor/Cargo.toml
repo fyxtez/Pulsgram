@@ -6,4 +6,6 @@ edition = "2024"
 [dependencies]
 publisher = { path = "../../publisher" }
 telegram_types = { path = "../../telegram_types" }
+binance = {path = "../../binance"}
 unicode-segmentation = "1.12.0"
+domain = {path = "../../domain"}

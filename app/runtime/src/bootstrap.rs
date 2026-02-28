@@ -42,7 +42,7 @@ pub struct AppRuntime {
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
     dispatcher_id: i64,
     pub workers: WorkersConfig,
-    pub _binance_client: BinanceClient,
+    pub binance_client: BinanceClient,
 }
 
 pub async fn bootstrap() -> Result<AppRuntime, AppError> {
@@ -177,7 +177,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
             rs_user_id: config.rs_user_id,
             lcs_user_id: config.lcs_user_id,
         },
-        _binance_client: binance_client,
+        binance_client,
     })
 }
 
@@ -229,7 +229,7 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         runtime.workers.perp_kols_usernames,
     ));
 
-    tokio::spawn(trade_executor::run(runtime.bus.clone()));
+    tokio::spawn(trade_executor::run(runtime.bus.clone(),runtime.binance_client));
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"
