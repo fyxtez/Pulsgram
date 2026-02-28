@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use crate::{
     constants::MAX_LEVERAGE,
     endpoints::{
-        ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, 
-        OPEN_ORDERS, ORDER, POSITION_MODE, POSITION_RISK, TICKER_PRICE,
+        ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER,
+        POSITION_MODE, POSITION_RISK, TICKER_PRICE,
     },
     error::BinanceError,
     response_types::{
         ExchangeInfoResponse, FuturesAccountInfo, FuturesCommissionRateResponse,
-        FuturesOrderResponse, ListenKeyResponse, PositionModeResponse,
-        PositionRisk, SetLeverageResponse, TickerPriceResponse,
+        FuturesOrderResponse, ListenKeyResponse, PositionModeResponse, PositionRisk,
+        SetLeverageResponse, TickerPriceResponse,
     },
     utils::{build_query, send_signed_request},
 };
@@ -438,5 +438,4 @@ impl BinanceClient {
 
         Ok(())
     }
-
 }

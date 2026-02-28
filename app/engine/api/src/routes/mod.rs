@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use crate::routes::{cors::build_cors_layer, ping::ping};
 
-pub fn create(app_state: Arc<app_state::AppState>,prefix:&str) -> Router {
+pub fn create(app_state: Arc<app_state::AppState>, prefix: &str) -> Router {
     Router::new()
         .nest(prefix, routes())
         .layer(build_cors_layer())

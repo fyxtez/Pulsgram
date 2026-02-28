@@ -18,9 +18,12 @@ pub async fn start_api_server(
 
     let api_prefix = "/api/v1";
 
-    let router = create(app_state,api_prefix);
+    let router = create(app_state, api_prefix);
 
-    println!("API Server starting at {}:{} with prefix: {}", address, port, api_prefix);
+    println!(
+        "API Server starting at {}:{} with prefix: {}",
+        address, port, api_prefix
+    );
 
     axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal())

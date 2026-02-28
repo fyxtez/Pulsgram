@@ -16,7 +16,7 @@ pub async fn run(bus: Arc<EventBus>, client: BinanceClient) {
                         "[APPROVED] id={} symbol={} side={}",
                         trade.intent_id, trade.symbol, trade.side,
                     );
-    
+
                     match client
                         .place_minimum_market_order(trade.symbol, &trade.side)
                         .await

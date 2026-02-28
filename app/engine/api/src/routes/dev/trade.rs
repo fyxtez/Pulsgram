@@ -34,8 +34,5 @@ pub async fn dev_trade_approved(
         .bus
         .publish(publisher::types::PulsgramEvent::TradeApproved(approved));
 
-    (
-        StatusCode::OK,
-        "Dev Trade Approved".to_string(),
-    )
+    (StatusCode::OK, "Dev Trade Approved".to_string())
 }
