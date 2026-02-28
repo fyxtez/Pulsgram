@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod integration_trade_flow {
-    use domain::types::order_side::OrderSide;
+    use domain::types::{order_side::OrderSide, symbol::Symbol};
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
@@ -17,14 +17,14 @@ mod integration_trade_flow {
         BinanceClient::new(reqwest::Client::new(), url, &api_key, &api_secret)
     }
 
-    async fn cleanup_position(client: &BinanceClient, symbol: &str) {
+    async fn cleanup_position(client: &BinanceClient, symbol: Symbol) {
         let positions = client
             .get_position_risk(Some(symbol))
             .await
             .expect("failed to fetch position risk");
 
         for pos in positions {
-            if pos.symbol != symbol {
+            if pos.symbol != symbol.to_string() {
                 continue;
             }
 
@@ -59,7 +59,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_rapid_sequential_orders() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -74,7 +74,7 @@ mod integration_trade_flow {
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
 
-        let pos = positions.into_iter().find(|p| p.symbol == symbol).unwrap();
+        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.05_f64);
@@ -85,7 +85,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_rapid_sequential_orders_with_cleanup() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -100,7 +100,7 @@ mod integration_trade_flow {
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
 
-        let pos = positions.into_iter().find(|p| p.symbol == symbol).unwrap();
+        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.05_f64);

@@ -157,6 +157,24 @@ if ! ssh "$REMOTE_USER@$REMOTE_HOST" \
 fi
 
 echo "Service is active."
+
+
+echo "Verifying deployed build version in app.log..."
+
+EXPECTED_VERSION="$BUILD_VERSION"
+
+LOG_OUTPUT=$(ssh "$REMOTE_USER@$REMOTE_HOST" \
+    "tail -n 100 /root/app.log")
+
+if echo "$LOG_OUTPUT" | grep -Fq "Build Version: $EXPECTED_VERSION"; then    echo "Build version $EXPECTED_VERSION confirmed in logs ✅"
+else
+    echo "ERROR: Build version $EXPECTED_VERSION NOT found in logs ❌"
+    echo ""
+    echo "Last 100 log lines:"
+    echo "$LOG_OUTPUT"
+    exit 1
+fi
+
 echo "Checking HTTP health endpoint..."
 
 HEALTH_OK=false

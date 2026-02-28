@@ -10,7 +10,7 @@ use crate::{
     },
     utils::{build_query, send_signed_request},
 };
-use domain::types::order_side::OrderSide;
+use domain::types::{order_side::OrderSide, symbol::Symbol};
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 
@@ -40,7 +40,7 @@ impl BinanceClient {
     where
         T: DeserializeOwned,
     {
-        let raw = send_signed_request(
+        let response = send_signed_request(
             &self.client,
             method,
             &self.base_url,
@@ -51,7 +51,7 @@ impl BinanceClient {
         )
         .await?;
 
-        let parsed = serde_json::from_str::<T>(&raw)?;
+        let parsed = response.json::<T>().await?;
         Ok(parsed)
     }
 
@@ -90,10 +90,10 @@ impl BinanceClient {
 
     pub async fn get_open_orders(
         &self,
-        symbol: Option<&str>,
+        symbol: Option<Symbol>,
     ) -> Result<Vec<FuturesOrderResponse>, BinanceError> {
         let query = match symbol {
-            Some(sym) => build_query(&[("symbol", sym.to_owned())]),
+            Some(sym) => build_query(&[("symbol", sym.to_string())]),
             None => String::new(),
         };
         self.signed_request(Method::GET, OPEN_ORDERS, query).await
@@ -101,9 +101,9 @@ impl BinanceClient {
 
     pub async fn get_trading_fees(
         &self,
-        symbol: &str,
+        symbol: Symbol,
     ) -> Result<FuturesCommissionRateResponse, BinanceError> {
-        let query = build_query(&[("symbol", symbol.to_owned())]);
+        let query = build_query(&[("symbol", symbol.to_string())]);
 
         self.signed_request(Method::GET, COMMISSION_RATE, query)
             .await
@@ -132,7 +132,7 @@ impl BinanceClient {
 
     pub async fn place_market_order(
         &self,
-        symbol: &str,
+        symbol: Symbol,
         side: &OrderSide,
         quantity: &str,
     ) -> Result<FuturesOrderResponse, BinanceError> {
@@ -156,11 +156,20 @@ impl BinanceClient {
         self.signed_request(Method::POST, ORDER, query).await
     }
 
+    //TODO: hardcode..
     pub async fn set_leverage(
         &self,
-        symbol: &str,
+        symbol:Symbol,
         leverage: u32,
     ) -> Result<SetLeverageResponse, BinanceError> {
+        let max_leverage = 125;
+        if leverage == 0 || leverage > max_leverage {
+            return Err(BinanceError::InvalidInput(format!(
+                "Invalid leverage {}. Allowed range: 1-{}",
+                leverage, max_leverage
+            )));
+        }
+
         let query = build_query(&[
             ("symbol", symbol.to_string()),
             ("leverage", leverage.to_string()),
@@ -171,7 +180,7 @@ impl BinanceClient {
 
     pub async fn place_limit_order(
         &self,
-        symbol: &str,
+        symbol: Symbol,
         side: &OrderSide,
         quantity: &str,
         price: &str,
@@ -196,7 +205,7 @@ impl BinanceClient {
     // Get current position information(only symbol that has position or open orders will be returned).
     pub async fn get_position_risk(
         &self,
-        symbol: Option<&str>,
+        symbol: Option<Symbol>,
     ) -> Result<Vec<PositionRisk>, BinanceError> {
         let query = match symbol {
             Some(s) => build_query(&[("symbol", s.to_string())]),
@@ -218,7 +227,7 @@ impl BinanceClient {
 
     pub async fn cancel_order(
         &self,
-        symbol: &str,
+        symbol: Symbol,
         order_id: i64,
     ) -> Result<FuturesOrderResponse, BinanceError> {
         let query = build_query(&[
@@ -229,14 +238,14 @@ impl BinanceClient {
         self.signed_request(Method::DELETE, ORDER, query).await
     }
 
-    pub async fn close_percentage(&self, symbol: &str, percent: f64) -> Result<(), BinanceError> {
+    pub async fn close_percentage(&self, symbol: Symbol, percent: f64) -> Result<(), BinanceError> {
         assert!(percent > 0.0 && percent <= 100.0);
 
         let positions = self.get_position_risk(Some(symbol)).await?;
 
         let pos = positions
             .into_iter()
-            .find(|p| p.symbol == symbol)
+            .find(|p| p.symbol == symbol.to_string())
             .ok_or_else(|| BinanceError::InvalidInput("Position not found".into()))?;
 
         let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
@@ -269,12 +278,12 @@ impl BinanceClient {
         Ok(())
     }
 
-    pub async fn close_full_position(&self, symbol: &str) -> Result<(), BinanceError> {
+    pub async fn close_full_position(&self, symbol: Symbol) -> Result<(), BinanceError> {
         let positions = self.get_position_risk(Some(symbol)).await?;
 
         let pos = positions
             .into_iter()
-            .find(|p| p.symbol == symbol)
+            .find(|p| p.symbol == symbol.to_string())
             .ok_or_else(|| BinanceError::InvalidInput("Position not found".into()))?;
 
         let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);

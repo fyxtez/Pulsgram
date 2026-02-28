@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use domain::types::order_side::OrderSide;
+    use domain::types::symbol::Symbol;
     use serial_test::serial;
 
     use crate::utils::build_query;
@@ -70,35 +71,16 @@ mod tests {
     async fn test_get_trading_fees() {
         let client = test_client(constants::TESTNET_FUTURES);
 
-        let result = client.get_trading_fees("BTCUSDT").await;
+        let result = client.get_trading_fees(Symbol::BTC).await;
 
         assert!(result.is_ok());
 
         let fees = result.unwrap();
 
-        assert_eq!(fees.symbol, "BTCUSDT");
+        assert_eq!(fees.symbol, Symbol::BTC.to_string());
         assert!(!fees.maker_commission_rate.is_empty());
         assert!(!fees.taker_commission_rate.is_empty());
         assert!(!fees.rpi_commission_rate.is_empty());
-    }
-
-    #[tokio::test]
-    #[ignore]
-    #[serial(binance)]
-    async fn test_trading_fees_invalid_symbol() {
-        let client = test_client(constants::TESTNET_FUTURES);
-
-        let result = client.get_trading_fees("INVALIDSYMBOL").await;
-
-        assert!(result.is_err());
-
-        match result {
-            Err(BinanceError::Api(msg)) => {
-                assert!(msg.contains("Invalid symbol"));
-            }
-            Err(e) => panic!("Unexpected error variant: {:?}", e),
-            Ok(_) => panic!("Expected error but got Ok"),
-        }
     }
 
     #[tokio::test]
@@ -108,7 +90,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let order = client
-            .place_market_order("BTCUSDT", &OrderSide::Buy, "0.01")
+            .place_market_order(Symbol::BTC, &OrderSide::Buy, "0.01")
             .await
             .expect("market buy failed");
 
@@ -119,7 +101,7 @@ mod tests {
 
         // Close position (reverse order)
         client
-            .place_market_order("BTCUSDT", &OrderSide::Sell, "0.01")
+            .place_market_order(Symbol::BTC, &OrderSide::Sell, "0.01")
             .await
             .expect("market sell failed");
     }
@@ -130,11 +112,11 @@ mod tests {
     async fn test_set_leverage() {
         let client = test_client(constants::TESTNET_FUTURES);
 
-        let result = client.set_leverage("BTCUSDT", 5).await;
+        let result = client.set_leverage(Symbol::BTC, 5).await;
 
         match result {
             Ok(response) => {
-                assert_eq!(response.symbol, "BTCUSDT");
+                assert_eq!(response.symbol,Symbol::BTC.to_string());
                 assert_eq!(response.leverage, 5);
             }
 
@@ -160,7 +142,7 @@ mod tests {
 
         // Place limit order far below market so it remains NEW
         let order = client
-            .place_limit_order("BTCUSDT", &OrderSide::Buy, "0.01", "35000")
+            .place_limit_order(Symbol::BTC, &OrderSide::Buy, "0.01", "35000")
             .await
             .expect("failed to place limit order");
 
@@ -177,7 +159,7 @@ mod tests {
         );
 
         let cancel = client
-            .cancel_order("BTCUSDT", order.order_id)
+            .cancel_order(Symbol::BTC, order.order_id)
             .await
             .expect("failed to cancel order");
 
@@ -191,7 +173,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let orders = client
-            .get_open_orders(Some("BTCUSDT"))
+            .get_open_orders(Some(Symbol::BTC))
             .await
             .expect("failed to fetch open orders");
 
@@ -239,7 +221,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let positions = client
-            .get_position_risk(Some("BTCUSDT"))
+            .get_position_risk(Some(Symbol::BTC))
             .await
             .expect("failed to fetch position risk");
 
@@ -257,7 +239,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let result = client
-            .place_market_order("BTCUSDT", &OrderSide::Buy, "invalid")
+            .place_market_order(Symbol::BTC, &OrderSide::Buy, "invalid")
             .await;
 
         assert!(result.is_err());

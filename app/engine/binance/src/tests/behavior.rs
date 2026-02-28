@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod integration_trade_flow {
-    use domain::types::order_side::OrderSide;
+    use domain::types::{order_side::OrderSide, symbol::Symbol};
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
@@ -17,14 +17,14 @@ mod integration_trade_flow {
         BinanceClient::new(reqwest::Client::new(), url, &api_key, &api_secret)
     }
 
-    async fn cleanup_position(client: &BinanceClient, symbol: &str) {
+    async fn cleanup_position(client: &BinanceClient, symbol: Symbol) {
         let positions = client
             .get_position_risk(Some(symbol))
             .await
             .expect("failed to fetch position risk");
 
         for pos in positions {
-            if pos.symbol != symbol {
+            if pos.symbol != symbol.to_string() {
                 continue;
             }
 
@@ -54,7 +54,7 @@ mod integration_trade_flow {
         }
     }
 
-    async fn assert_flat_position(client: &BinanceClient, symbol: &str) {
+    async fn assert_flat_position(client: &BinanceClient, symbol: Symbol) {
         let positions = client
             .get_position_risk(Some(symbol))
             .await
@@ -66,7 +66,7 @@ mod integration_trade_flow {
         }
 
         // If symbol entry exists, ensure size is zero
-        if let Some(pos) = positions.into_iter().find(|p| p.symbol == symbol) {
+        if let Some(pos) = positions.into_iter().find(|p| p.symbol == symbol.to_string()) {
             let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
             assert_eq!(amt, 0.0, "Position not flat");
         }
@@ -77,7 +77,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_open_wait_close() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
         let qty = "0.01";
 
         cleanup_position(&client, symbol).await;
@@ -88,7 +88,7 @@ mod integration_trade_flow {
             .await
             .expect("failed to open");
 
-        assert_eq!(open.symbol, symbol);
+        assert_eq!(open.symbol, symbol.to_string());
         assert_eq!(open.side, "BUY");
 
         sleep(Duration::from_secs(5)).await;
@@ -109,7 +109,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_double_open_partial_closes() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         let full_qty = 0.02_f64;
         let half_qty = 0.02_f64;
@@ -152,7 +152,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_accumulate_position() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -172,7 +172,7 @@ mod integration_trade_flow {
 
         let position = positions
             .into_iter()
-            .find(|p| p.symbol == symbol)
+            .find(|p| p.symbol == symbol.to_string())
             .expect("Position not found");
 
         let position_amt: f64 = position.position_amt.parse().unwrap();
@@ -185,7 +185,7 @@ mod integration_trade_flow {
     //From long 0.02 to short 0.03
     async fn test_flip_position() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -206,7 +206,7 @@ mod integration_trade_flow {
 
         let position = positions
             .into_iter()
-            .find(|p| p.symbol == symbol)
+            .find(|p| p.symbol == symbol.to_string())
             .expect("Position not found");
 
         let position_amt: f64 = position.position_amt.parse().unwrap();
@@ -228,7 +228,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_limit_and_cancel() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol =Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -252,7 +252,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_close_percentage() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -266,7 +266,7 @@ mod integration_trade_flow {
         sleep(Duration::from_secs(2)).await;
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
-        let pos = positions.into_iter().find(|p| p.symbol == symbol).unwrap();
+        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.04_f64);
@@ -276,7 +276,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_min_quantity_precision() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -294,7 +294,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_invalid_precision_rejected() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol = "BTCUSDT";
+        let symbol = Symbol::BTC;
 
         let result = client
             .place_market_order(symbol, &OrderSide::Buy, "0.0000001")

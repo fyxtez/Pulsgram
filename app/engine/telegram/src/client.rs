@@ -99,13 +99,17 @@ pub async fn handle_updates(
             Err(e) => {
                 let msg = format!("Telegram update stream error: {}", e);
 
+                //TODO: Update Loop failed.
+                //Create Separate EventType - Stream Teleagram update Loop failed
+                //Healthcheck can always consider telegram active, and than if it gets this
+                //event it can update the healths.telegram = false.
                 event_bus.publish(publisher::types::PulsgramEvent::Error(
                     publisher::types::ErrorEvent {
                         message_text: msg,
                         source: "UpdateHandler::StreamError",
                     },
                 ));
-                continue;
+                break;
             }
         };
 

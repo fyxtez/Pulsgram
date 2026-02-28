@@ -34,7 +34,7 @@ pub async fn send_signed_request(
     api_key: &str,
     api_secret: &str,
     mut query_string: String,
-) -> Result<String, BinanceError> {
+) -> Result<reqwest::Response, BinanceError> {
     let timestamp = get_timestamp();
 
     if !query_string.is_empty() {
@@ -56,26 +56,21 @@ pub async fn send_signed_request(
         base_url, endpoint, query_string, signature
     );
 
-    let request = client.request(method, url);
+    let response = client
+        .request(method, url)
+        .header("X-MBX-APIKEY", api_key)
+        .send()
+        .await?;
 
-    let response = request.header("X-MBX-APIKEY", api_key).send().await?;
 
     let status = response.status();
-    let text = response.text().await?;
-
+    
     if !status.is_success() {
-        return Err(BinanceError::Api(text));
+        let err_text = response.text().await?;
+        return Err(BinanceError::Api(err_text));
     }
 
-    let json: serde_json::Value = serde_json::from_str(&text).map_err(BinanceError::Json)?;
-
-    if let Some(code) = json.get("code").and_then(|c| c.as_i64())
-        && code < 0
-    {
-        return Err(BinanceError::Api(json.to_string()));
-    }
-
-    Ok(serde_json::to_string_pretty(&json)?)
+    Ok(response)
 }
 
 pub fn build_query(params: &[(&str, String)]) -> String {
