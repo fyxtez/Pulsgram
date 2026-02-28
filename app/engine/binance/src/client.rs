@@ -1,17 +1,14 @@
 use std::collections::HashMap;
 
 use crate::{
-    endpoints::{
+    constants::MAX_LEVERAGE, endpoints::{
         ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER,
         POSITION_MODE, POSITION_RISK,
-    },
-    error::BinanceError,
-    response_types::{
+    }, error::BinanceError, response_types::{
         ExchangeInfoResponse, FuturesAccountInfo, FuturesCommissionRateResponse,
         FuturesOrderResponse, ListenKeyResponse, PositionModeResponse, PositionRisk,
         SetLeverageResponse,
-    },
-    utils::{build_query, send_signed_request},
+    }, utils::{build_query, send_signed_request}
 };
 use domain::types::{
     order_side::OrderSide,
@@ -63,7 +60,19 @@ impl BinanceClient {
         )
         .await?;
 
-        let parsed = response.json::<T>().await?;
+        let text = response.text().await?;
+
+        let value: serde_json::Value = serde_json::from_str(&text)?;
+
+        // Detect Binance error first
+        if let Some(code) = value.get("code").and_then(|c| c.as_i64()) {
+            if code < 0 {
+                let api_err = serde_json::from_value(value)?;
+                return Err(BinanceError::Api(api_err));
+            }
+        }
+
+        let parsed = serde_json::from_value::<T>(value)?;
         Ok(parsed)
     }
 
@@ -172,17 +181,15 @@ impl BinanceClient {
         self.api_key_request(Method::GET, EXCHANGE_INFO, None).await
     }
 
-    //TODO: hardcode 125..
     pub async fn set_leverage(
         &self,
         symbol: Symbol,
         leverage: u32,
     ) -> Result<SetLeverageResponse, BinanceError> {
-        let max_leverage = 125;
-        if leverage == 0 || leverage > max_leverage {
+        if leverage == 0 || leverage > MAX_LEVERAGE {
             return Err(BinanceError::InvalidInput(format!(
                 "Invalid leverage {}. Allowed range: 1-{}",
-                leverage, max_leverage
+                leverage, MAX_LEVERAGE
             )));
         }
 
