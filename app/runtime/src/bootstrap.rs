@@ -7,7 +7,8 @@ use crate::{
 };
 use api::start_api_server;
 use app_state::AppState;
-use binance::client::BinanceClient;
+use binance::{client::BinanceClient, filters::extract_supported_filters};
+use domain::types::symbol::Symbol;
 use publisher::EventBus;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
@@ -125,19 +126,45 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
 
     let perp_kols_usernames: Vec<String> = config.perp_kols_usernames;
 
+    // Explicitly asserting ownership dominance.
     drop(peers_map_dispatcher);
-
     drop(dialogs);
     drop(dialogs_from_dispatcher);
 
     let reqwest_client = create_reqwest_client()?;
 
-    let binance_client = binance::client::BinanceClient::new(
+    let mut binance_client = binance::client::BinanceClient::new(
         reqwest_client.clone(),
         binance::constants::TESTNET_FUTURES,
         &config.binance_api_key,
         &config.binance_api_secret,
     );
+
+    // TODO: Move exchangeInfo fetch + filter extraction into BinanceClient::build()
+    // This is exchange-specific initialization logic and does not belong in bootstrap.
+    let exchange_info = binance_client
+        .get_exchange_info()
+        .await
+        .map_err(AppError::from)?;
+
+    // TODO: Move SUPPORTED symbols into domain layer (domain::symbols::SUPPORTED_SYMBOLS)
+    // Bootstrap should not define trading universe.
+    let supported_symbols = vec![
+        Symbol::BTC,
+        Symbol::ETH,
+        Symbol::SOL,
+        Symbol::BNB,
+        Symbol::XRP,
+        Symbol::TRX,
+        Symbol::ADA,
+        Symbol::ASTER,
+    ];
+
+    let filters = extract_supported_filters(&exchange_info, &supported_symbols)?;
+    binance_client.set_symbol_filters(filters);
+
+    // Explicitly asserting ownership dominance.
+    drop(supported_symbols);
 
     let client = Arc::new(client);
 
@@ -229,7 +256,10 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         runtime.workers.perp_kols_usernames,
     ));
 
-    tokio::spawn(trade_executor::run(runtime.bus.clone(),runtime.binance_client));
+    tokio::spawn(trade_executor::run(
+        runtime.bus.clone(),
+        runtime.binance_client,
+    ));
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"

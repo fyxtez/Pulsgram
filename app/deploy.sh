@@ -2,6 +2,12 @@
 set -euo pipefail
 trap 'echo ""; echo "❌ Deployment failed at line $LINENO"; exit 1' ERR
 
+# Prevent deploying uncommited changes.
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Working tree is dirty. Commit changes before deploy."
+    exit 1
+fi
+
 # --------------------------
 # LOAD CONFIG FROM .env
 # --------------------------

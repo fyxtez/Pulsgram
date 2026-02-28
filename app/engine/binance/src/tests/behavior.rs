@@ -66,7 +66,10 @@ mod integration_trade_flow {
         }
 
         // If symbol entry exists, ensure size is zero
-        if let Some(pos) = positions.into_iter().find(|p| p.symbol == symbol.to_string()) {
+        if let Some(pos) = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol.to_string())
+        {
             let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
             assert_eq!(amt, 0.0, "Position not flat");
         }
@@ -228,7 +231,7 @@ mod integration_trade_flow {
     #[serial(binance)]
     async fn test_limit_and_cancel() {
         let client = test_client(constants::TESTNET_FUTURES);
-        let symbol =Symbol::BTC;
+        let symbol = Symbol::BTC;
 
         cleanup_position(&client, symbol).await;
 
@@ -266,7 +269,10 @@ mod integration_trade_flow {
         sleep(Duration::from_secs(2)).await;
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
-        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
+        let pos = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol.to_string())
+            .unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.04_f64);

@@ -1,16 +1,22 @@
+use std::collections::HashMap;
+
 use crate::{
     endpoints::{
-        ACCOUNT_INFO, COMMISSION_RATE, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER, POSITION_MODE,
-        POSITION_RISK,
+        ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER,
+        POSITION_MODE, POSITION_RISK,
     },
     error::BinanceError,
     response_types::{
-        FuturesAccountInfo, FuturesCommissionRateResponse, FuturesOrderResponse, ListenKeyResponse,
-        PositionModeResponse, PositionRisk, SetLeverageResponse,
+        ExchangeInfoResponse, FuturesAccountInfo, FuturesCommissionRateResponse,
+        FuturesOrderResponse, ListenKeyResponse, PositionModeResponse, PositionRisk,
+        SetLeverageResponse,
     },
     utils::{build_query, send_signed_request},
 };
-use domain::types::{order_side::OrderSide, symbol::Symbol};
+use domain::types::{
+    order_side::OrderSide,
+    symbol::{Symbol, SymbolFilters},
+};
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 
@@ -19,6 +25,7 @@ pub struct BinanceClient {
     base_url: String,
     api_key: String,
     api_secret: String,
+    symbol_filters: HashMap<Symbol, SymbolFilters>,
 }
 
 impl BinanceClient {
@@ -28,7 +35,12 @@ impl BinanceClient {
             base_url: base_url.to_string(),
             api_key: api_key.to_string(),
             api_secret: api_secret.to_string(),
+            symbol_filters: HashMap::new(),
         }
+    }
+
+    pub fn set_symbol_filters(&mut self, filters: HashMap<Symbol, SymbolFilters>) {
+        self.symbol_filters = filters;
     }
 
     async fn signed_request<T>(
@@ -156,10 +168,14 @@ impl BinanceClient {
         self.signed_request(Method::POST, ORDER, query).await
     }
 
-    //TODO: hardcode..
+    pub async fn get_exchange_info(&self) -> Result<ExchangeInfoResponse, BinanceError> {
+        self.api_key_request(Method::GET, EXCHANGE_INFO, None).await
+    }
+
+    //TODO: hardcode 125..
     pub async fn set_leverage(
         &self,
-        symbol:Symbol,
+        symbol: Symbol,
         leverage: u32,
     ) -> Result<SetLeverageResponse, BinanceError> {
         let max_leverage = 125;

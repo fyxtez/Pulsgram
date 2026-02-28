@@ -2134,6 +2134,7 @@ dependencies = [
  "app_state",
  "binance",
  "dashmap",
+ "domain",
  "dotenv",
  "errors_reporter",
  "forwarder",

@@ -132,3 +132,83 @@ pub struct SetLeverageResponse {
 pub struct ListenKeyResponse {
     pub listen_key: String,
 }
+
+//https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Exchange-Information#http-request
+//Extract Only "symbols" from response.
+#[derive(Debug, serde::Deserialize)]
+pub struct ExchangeInfoResponse {
+    pub symbols: Vec<ExchangeSymbol>,
+}
+// in "symbols" response there is a array of {"symbol",..."not important data",... "filters"}
+#[derive(Debug, serde::Deserialize)]
+pub struct ExchangeSymbol {
+    pub symbol: String,
+    pub filters: Vec<ExchangeFilter>,
+}
+
+// filters can be:
+// "filters": [
+//  				{
+//  					"filterType": "PRICE_FILTER",
+//      				"maxPrice": "300",
+//      				"minPrice": "0.0001",
+//      				"tickSize": "0.0001"
+//      			},
+//     			{
+//     				"filterType": "LOT_SIZE",
+//      				"maxQty": "10000000",
+//      				"minQty": "1",
+//      				"stepSize": "1"
+//      			},
+//     			{
+//     				"filterType": "MARKET_LOT_SIZE",
+//      				"maxQty": "590119",
+//      				"minQty": "1",
+//      				"stepSize": "1"
+//      			},
+//      			{
+//     				"filterType": "MAX_NUM_ORDERS",
+//     				"limit": 200
+//   				},
+//   				{
+//   					"filterType": "MIN_NOTIONAL",
+//   					"notional": "5.0",
+//   				},
+//   				{
+//     				"filterType": "PERCENT_PRICE",
+//     				"multiplierUp": "1.1500",
+//     				"multiplierDown": "0.8500",
+//     				"multiplierDecimal": "4"
+//     			}
+//    			],
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(tag = "filterType")]
+pub enum ExchangeFilter {
+    #[serde(rename = "LOT_SIZE")]
+    LotSize {
+        #[serde(rename = "minQty")]
+        min_qty: String,
+
+        #[serde(rename = "maxQty")]
+        max_qty: String,
+
+        #[serde(rename = "stepSize")]
+        step_size: String,
+    },
+
+    #[serde(rename = "MIN_NOTIONAL")]
+    MinNotional {
+        #[serde(rename = "notional")]
+        notional: String,
+    },
+
+    #[serde(rename = "PRICE_FILTER")]
+    PriceFilter {
+        #[serde(rename = "tickSize")]
+        tick_size: String,
+    },
+
+    #[serde(other)]
+    Other,
+}

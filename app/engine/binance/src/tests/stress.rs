@@ -74,7 +74,10 @@ mod integration_trade_flow {
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
 
-        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
+        let pos = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol.to_string())
+            .unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.05_f64);
@@ -100,7 +103,10 @@ mod integration_trade_flow {
 
         let positions = client.get_position_risk(Some(symbol)).await.unwrap();
 
-        let pos = positions.into_iter().find(|p| p.symbol == symbol.to_string()).unwrap();
+        let pos = positions
+            .into_iter()
+            .find(|p| p.symbol == symbol.to_string())
+            .unwrap();
         let amt: f64 = pos.position_amt.parse().unwrap();
 
         assert_eq!(amt, 0.05_f64);

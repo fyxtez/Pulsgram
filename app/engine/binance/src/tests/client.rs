@@ -257,4 +257,19 @@ mod tests {
         assert!(query.contains("side=BUY"));
         assert!(query.contains("&"));
     }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_get_exchange_info() {
+        let client = test_client(constants::TESTNET_FUTURES);
+
+        let info = client
+            .get_exchange_info()
+            .await
+            .expect("failed to fetch exchange info");
+
+        println!("Total symbols: {}", info.symbols.len());
+
+        assert!(!info.symbols.is_empty());
+    }
 }
