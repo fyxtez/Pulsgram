@@ -1,26 +1,29 @@
 use app_state::AppState;
-use axum::{Extension, http::StatusCode, response::IntoResponse};
-use domain::types::{
-    order_side::OrderSide, symbol::Symbol, trade::TradeApproved, trade_intent::TradeIntent,
-};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
+use domain::types::{trade::TradeApproved, trade_intent::TradeIntent};
 use std::sync::Arc;
 
-pub async fn dev_trade_approved(Extension(state): Extension<Arc<AppState>>) -> impl IntoResponse {
-    let intent = match TradeIntent::builder(&Symbol::BTC)
-        .entry(222222.2)
-        .side(OrderSide::Buy)
-        .stop_loss(11111.1)
-        .targets(&[])
-        .timeframe("30m")
+use crate::dto::dev::DevTradeApprovedRequest;
+
+pub async fn dev_trade_approved(
+    Extension(state): Extension<Arc<AppState>>,
+    Json(payload): Json<DevTradeApprovedRequest>,
+) -> impl IntoResponse {
+    let intent = match TradeIntent::builder(&payload.symbol)
+        .entry(payload.entry)
+        .side(payload.side)
+        .stop_loss(payload.stop_loss)
+        .targets(&payload.targets)
+        .timeframe(&payload.timeframe)
         .build()
     {
         Ok(intent) => intent,
         Err(error) => {
-            eprintln!("Dev TradeApproved error: {:?}", error);
+            eprintln!("Dev - TradeApproved error: {:?}", error);
 
             return (
                 StatusCode::BAD_REQUEST,
-                format!("Dev TradeApproved - Wrong parameters: {}", error),
+                format!("Dev - TradeApproved - Wrong parameters: {}", error),
             );
         }
     };
@@ -33,6 +36,6 @@ pub async fn dev_trade_approved(Extension(state): Extension<Arc<AppState>>) -> i
 
     (
         StatusCode::OK,
-        "Dev TradeApproved - event published".to_string(),
+        "Dev Trade Approved".to_string(),
     )
 }

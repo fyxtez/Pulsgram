@@ -4,19 +4,9 @@ mod tests {
     use domain::types::symbol::Symbol;
     use serial_test::serial;
 
+    use crate::tests::test_support::test_support::test_client;
     use crate::utils::build_query;
-    use crate::{client::BinanceClient, constants, error::BinanceError};
-
-    fn test_client(url: &str) -> BinanceClient {
-        dotenv::from_filename("app/.env").ok();
-
-        let api_key = std::env::var("BINANCE_API_KEY_TEST").expect("Set BINANCE_API_KEY_TEST");
-
-        let api_secret =
-            std::env::var("BINANCE_API_SECRET_TEST").expect("Set BINANCE_API_SECRET_TEST");
-
-        BinanceClient::new(reqwest::Client::new(), url, &api_key, &api_secret)
-    }
+    use crate::{constants, error::BinanceError};
 
     #[tokio::test]
     #[ignore]
@@ -90,7 +80,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let order = client
-            .place_market_order(Symbol::BTC, &OrderSide::Buy, "0.01")
+            .place_market_order(Symbol::BTC, &OrderSide::Buy, 0.01)
             .await
             .expect("market buy failed");
 
@@ -101,7 +91,7 @@ mod tests {
 
         // Close position (reverse order)
         client
-            .place_market_order(Symbol::BTC, &OrderSide::Sell, "0.01")
+            .place_market_order(Symbol::BTC, &OrderSide::Sell, 0.01)
             .await
             .expect("market sell failed");
     }
@@ -146,7 +136,7 @@ mod tests {
 
         // Place limit order far below market so it remains NEW
         let order = client
-            .place_limit_order(Symbol::BTC, &OrderSide::Buy, "0.01", "35000")
+            .place_limit_order(Symbol::BTC, &OrderSide::Buy, 0.01, 35000.0)
             .await
             .expect("failed to place limit order");
 
@@ -243,7 +233,7 @@ mod tests {
         let client = test_client(constants::TESTNET_FUTURES);
 
         let result = client
-            .place_market_order(Symbol::BTC, &OrderSide::Buy, "invalid")
+            .place_market_order(Symbol::BTC, &OrderSide::Buy, 0.0000000000001)
             .await;
 
         assert!(result.is_err());

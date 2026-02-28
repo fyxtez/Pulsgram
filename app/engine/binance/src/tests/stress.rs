@@ -4,18 +4,7 @@ mod integration_trade_flow {
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
-    use crate::{client::BinanceClient, constants};
-
-    fn test_client(url: &str) -> BinanceClient {
-        dotenv::from_filename("app/.env").ok();
-
-        let api_key = std::env::var("BINANCE_API_KEY_TEST").expect("Set BINANCE_API_KEY_TEST");
-
-        let api_secret =
-            std::env::var("BINANCE_API_SECRET_TEST").expect("Set BINANCE_API_SECRET_TEST");
-
-        BinanceClient::new(reqwest::Client::new(), url, &api_key, &api_secret)
-    }
+    use crate::{client::BinanceClient, constants, tests::test_support::test_support::test_client};
 
     async fn cleanup_position(client: &BinanceClient, symbol: Symbol) {
         let positions = client
@@ -36,7 +25,7 @@ mod integration_trade_flow {
             // for the exact same quantity.
             if amt > 0.0 {
                 client
-                    .place_market_order(symbol, &OrderSide::Sell, &amt.to_string())
+                    .place_market_order(symbol, &OrderSide::Sell, amt)
                     .await
                     .expect("failed to cleanup long position");
             }
@@ -47,7 +36,7 @@ mod integration_trade_flow {
             // for the absolute value of the position size.
             if amt < 0.0 {
                 client
-                    .place_market_order(symbol, &OrderSide::Buy, &(-amt).to_string())
+                    .place_market_order(symbol, &OrderSide::Buy, -amt)
                     .await
                     .expect("failed to cleanup short position");
             }
@@ -65,7 +54,7 @@ mod integration_trade_flow {
 
         for _ in 0..5 {
             client
-                .place_market_order(symbol, &OrderSide::Buy, "0.01")
+                .place_market_order(symbol, &OrderSide::Buy, 0.01)
                 .await
                 .unwrap();
         }
@@ -94,7 +83,7 @@ mod integration_trade_flow {
 
         for _ in 0..5 {
             client
-                .place_market_order(symbol, &OrderSide::Buy, "0.01")
+                .place_market_order(symbol, &OrderSide::Buy, 0.01)
                 .await
                 .unwrap();
         }
@@ -111,7 +100,6 @@ mod integration_trade_flow {
 
         assert_eq!(amt, 0.05_f64);
 
-        // 🔥 cleanup
         cleanup_position(&client, symbol).await;
     }
 }

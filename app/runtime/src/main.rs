@@ -1,9 +1,9 @@
 use crate::error::AppError;
 
-mod types;
 mod bootstrap;
 mod config;
 mod error;
+mod types;
 mod utils;
 
 #[tokio::main]

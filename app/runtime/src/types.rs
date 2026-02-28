@@ -12,5 +12,5 @@ pub struct TelegramRuntime {
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
     pub dispatcher_id: i64,
     pub workers: WorkersConfig,
-    pub dialogs_data: dashmap::DashMap<i64, DialogData>
+    pub dialogs_data: dashmap::DashMap<i64, DialogData>,
 }

@@ -1,6 +1,5 @@
 use binance::client::BinanceClient;
 use binance::error::BinanceError;
-use domain::types::symbol::Symbol;
 use publisher::types::{ErrorEvent, PulsgramEvent};
 use publisher::{EventBus, handle_recv_error};
 use std::sync::Arc;
@@ -17,9 +16,9 @@ pub async fn run(bus: Arc<EventBus>, client: BinanceClient) {
                         "[APPROVED] id={} symbol={} side={}",
                         trade.intent_id, trade.symbol, trade.side,
                     );
+    
                     match client
-                        // .place_market_order(Symbol::SOL, &trade.side, "0.002") //btc
-                        .place_market_order(Symbol::SOL, &trade.side, "0.1")
+                        .place_minimum_market_order(trade.symbol, &trade.side)
                         .await
                     {
                         //TODO: Replace this work somewhere else.

@@ -7,3 +7,4 @@ pub const POSITION_MODE: &str = "fapi/v1/positionSide/dual";
 pub const POSITION_RISK: &str = "fapi/v3/positionRisk";
 pub const LISTEN_KEY: &str = "fapi/v1/listenKey";
 pub const EXCHANGE_INFO: &str = "fapi/v1/exchangeInfo";
+pub const TICKER_PRICE: &str = "fapi/v1/ticker/price";

@@ -1,14 +1,18 @@
 use std::collections::HashMap;
 
 use crate::{
-    constants::MAX_LEVERAGE, endpoints::{
-        ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, OPEN_ORDERS, ORDER,
-        POSITION_MODE, POSITION_RISK,
-    }, error::BinanceError, response_types::{
+    constants::MAX_LEVERAGE,
+    endpoints::{
+        ACCOUNT_INFO, COMMISSION_RATE, EXCHANGE_INFO, LEVERAGE, LISTEN_KEY, 
+        OPEN_ORDERS, ORDER, POSITION_MODE, POSITION_RISK, TICKER_PRICE,
+    },
+    error::BinanceError,
+    response_types::{
         ExchangeInfoResponse, FuturesAccountInfo, FuturesCommissionRateResponse,
-        FuturesOrderResponse, ListenKeyResponse, PositionModeResponse, PositionRisk,
-        SetLeverageResponse,
-    }, utils::{build_query, send_signed_request}
+        FuturesOrderResponse, ListenKeyResponse, PositionModeResponse,
+        PositionRisk, SetLeverageResponse, TickerPriceResponse,
+    },
+    utils::{build_query, send_signed_request},
 };
 use domain::types::{
     order_side::OrderSide,
@@ -40,6 +44,16 @@ impl BinanceClient {
         self.symbol_filters = filters;
     }
 
+    pub fn get_filters(&self, symbol: &Symbol) -> Option<&SymbolFilters> {
+        self.symbol_filters.get(symbol)
+    }
+    pub fn min_quantity(&self, symbol: Symbol) -> Result<f64, BinanceError> {
+        self.symbol_filters
+            .get(&symbol)
+            .map(|f| f.min_qty)
+            .ok_or_else(|| BinanceError::InvalidInput(format!("Unknown symbol: {}", symbol)))
+    }
+
     async fn signed_request<T>(
         &self,
         method: Method,
@@ -65,11 +79,11 @@ impl BinanceClient {
         let value: serde_json::Value = serde_json::from_str(&text)?;
 
         // Detect Binance error first
-        if let Some(code) = value.get("code").and_then(|c| c.as_i64()) {
-            if code < 0 {
-                let api_err = serde_json::from_value(value)?;
-                return Err(BinanceError::Api(api_err));
-            }
+        if let Some(code) = value.get("code").and_then(|c| c.as_i64())
+            && code < 0
+        {
+            let api_err = serde_json::from_value(value)?;
+            return Err(BinanceError::Api(api_err));
         }
 
         let parsed = serde_json::from_value::<T>(value)?;
@@ -151,30 +165,82 @@ impl BinanceClient {
         Ok(())
     }
 
+    fn format_quantity(&self, quantity: f64, step_size: f64) -> String {
+        let precision = step_size
+            .to_string()
+            .split('.')
+            .nth(1)
+            .map(|s| s.len())
+            .unwrap_or(0);
+
+        format!("{:.*}", precision, quantity)
+    }
+
+    pub async fn place_minimum_market_order(
+        &self,
+        symbol: Symbol,
+        side: &OrderSide,
+    ) -> Result<FuturesOrderResponse, BinanceError> {
+        let filters = self
+            .symbol_filters
+            .get(&symbol)
+            .ok_or_else(|| BinanceError::InvalidInput(format!("Unknown symbol: {}", symbol)))?;
+
+        let current_price = self.get_current_price(symbol).await?;
+
+        let min_notional_qty = filters.min_notional / current_price;
+
+        let raw = filters.min_qty.max(min_notional_qty);
+
+        let steps = (raw / filters.step_size).ceil();
+        let qty = steps * filters.step_size;
+
+        self.place_market_order(symbol, side, qty).await
+    }
+
     pub async fn place_market_order(
         &self,
         symbol: Symbol,
         side: &OrderSide,
-        quantity: &str,
+        quantity: f64,
     ) -> Result<FuturesOrderResponse, BinanceError> {
-        quantity
-            .parse::<f64>()
-            .map_err(|_| BinanceError::InvalidInput("invalid quantity format".to_string()))?;
-
-        if quantity.trim().is_empty() {
-            return Err(BinanceError::InvalidInput(
-                "quantity cannot be empty".to_string(),
-            ));
+        let filters = self
+            .symbol_filters
+            .get(&symbol)
+            .ok_or(BinanceError::InvalidInput(format!(
+                "Unknown symbol: {}",
+                symbol
+            )))?;
+        if quantity < filters.min_qty {
+            return Err(BinanceError::InvalidInput(format!(
+                "Quantity {} below min_qty {}",
+                quantity, filters.min_qty
+            )));
         }
+
+        let aligned_qty = self.align_to_step(quantity, filters.step_size);
+
+        if aligned_qty <= 0.0 {
+            return Err(BinanceError::InvalidInput(format!(
+                "Quantity {} invalid after step alignment",
+                quantity
+            )));
+        }
+        let quantity_str = self.format_quantity(aligned_qty, filters.step_size);
+
         let query = build_query(&[
             ("symbol", symbol.to_string()),
             ("side", side.to_string()),
             ("type", "MARKET".to_string()),
-            ("quantity", quantity.to_string()),
+            ("quantity", quantity_str),
             ("newOrderRespType", "RESULT".to_string()),
         ]);
 
         self.signed_request(Method::POST, ORDER, query).await
+    }
+
+    fn align_to_step(&self, quantity: f64, step: f64) -> f64 {
+        (quantity / step).floor() * step
     }
 
     pub async fn get_exchange_info(&self) -> Result<ExchangeInfoResponse, BinanceError> {
@@ -205,15 +271,47 @@ impl BinanceClient {
         &self,
         symbol: Symbol,
         side: &OrderSide,
-        quantity: &str,
-        price: &str,
+        quantity: f64,
+        price: f64,
     ) -> Result<FuturesOrderResponse, BinanceError> {
+        let filters = self
+            .symbol_filters
+            .get(&symbol)
+            .ok_or(BinanceError::InvalidInput(format!(
+                "Unknown symbol: {}",
+                symbol
+            )))?;
+
+        if quantity < filters.min_qty {
+            return Err(BinanceError::InvalidInput(format!(
+                "Quantity {} below min_qty {}",
+                quantity, filters.min_qty
+            )));
+        }
+
+        let aligned_qty = self.align_to_step(quantity, filters.step_size);
+        if aligned_qty <= 0.0 {
+            return Err(BinanceError::InvalidInput(
+                "Quantity invalid after alignment".into(),
+            ));
+        }
+
+        let aligned_price = self.align_to_step(price, filters.tick_size);
+        if aligned_price <= 0.0 {
+            return Err(BinanceError::InvalidInput(
+                "Price invalid after alignment".into(),
+            ));
+        }
+
+        let quantity_str = self.format_quantity(aligned_qty, filters.step_size);
+        let price_str = self.format_quantity(aligned_price, filters.tick_size);
+
         let query = build_query(&[
             ("symbol", symbol.to_string()),
             ("side", side.to_string()),
             ("type", "LIMIT".to_string()),
-            ("quantity", quantity.to_string()),
-            ("price", price.to_string()),
+            ("quantity", quantity_str),
+            ("price", price_str),
             ("timeInForce", "GTC".to_string()),
         ]);
 
@@ -262,7 +360,11 @@ impl BinanceClient {
     }
 
     pub async fn close_percentage(&self, symbol: Symbol, percent: f64) -> Result<(), BinanceError> {
-        assert!(percent > 0.0 && percent <= 100.0);
+        if percent <= 0.0 || percent > 100.0 {
+            return Err(BinanceError::InvalidInput(
+                "percent must be between 0 and 100".into(),
+            ));
+        }
 
         let positions = self.get_position_risk(Some(symbol)).await?;
 
@@ -279,16 +381,9 @@ impl BinanceClient {
 
         let raw = amt.abs() * percent / 100.0;
 
-        // round DOWN to 3 decimals (BTC precision)
-        let close_qty = (raw * 1000.0).floor() / 1000.0;
-
-        if close_qty <= 0.0 {
-            // If requested percentage is too small to meet step size,
-            // close full position instead to avoid dust leftovers.
+        if raw <= 0.0 {
             return self.close_full_position(symbol).await;
         }
-
-        let close_qty = format!("{:.3}", close_qty);
 
         let side = if amt > 0.0 {
             OrderSide::Sell
@@ -296,9 +391,24 @@ impl BinanceClient {
             OrderSide::Buy
         };
 
-        self.place_market_order(symbol, &side, &close_qty).await?;
+        self.place_market_order(symbol, &side, raw).await?;
 
         Ok(())
+    }
+
+    pub async fn get_current_price(&self, symbol: Symbol) -> Result<f64, BinanceError> {
+        let query = build_query(&[("symbol", symbol.to_string())]);
+
+        let resp: TickerPriceResponse = self
+            .api_key_request(Method::GET, TICKER_PRICE, Some(query))
+            .await?;
+
+        let price = resp
+            .price
+            .parse::<f64>()
+            .map_err(|_| BinanceError::InvalidInput("Invalid ticker price".into()))?;
+
+        Ok(price)
     }
 
     pub async fn close_full_position(&self, symbol: Symbol) -> Result<(), BinanceError> {
@@ -309,7 +419,10 @@ impl BinanceClient {
             .find(|p| p.symbol == symbol.to_string())
             .ok_or_else(|| BinanceError::InvalidInput("Position not found".into()))?;
 
-        let amt: f64 = pos.position_amt.parse().unwrap_or(0.0);
+        let amt: f64 = pos
+            .position_amt
+            .parse()
+            .map_err(|_| BinanceError::InvalidInput("Invalid position amount".into()))?;
 
         if amt == 0.0 {
             return Ok(());
@@ -321,9 +434,9 @@ impl BinanceClient {
             OrderSide::Buy
         };
 
-        self.place_market_order(symbol, &side, &amt.abs().to_string())
-            .await?;
+        self.place_market_order(symbol, &side, amt.abs()).await?;
 
         Ok(())
     }
+
 }

@@ -1,6 +1,8 @@
+use serde::Deserialize;
+use std::convert::TryFrom;
 use std::{fmt, str::FromStr};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 pub enum Symbol {
     BTC,
     ETH,
@@ -47,8 +49,6 @@ impl FromStr for Symbol {
         }
     }
 }
-
-use std::convert::TryFrom;
 
 impl TryFrom<&str> for Symbol {
     type Error = String;

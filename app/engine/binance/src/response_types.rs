@@ -25,6 +25,12 @@ pub struct FuturesAsset {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct TickerPriceResponse {
+    pub symbol: String,
+    pub price: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FuturesPosition {
     pub symbol: String,

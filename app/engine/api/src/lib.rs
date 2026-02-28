@@ -1,3 +1,4 @@
+mod dto;
 mod routes;
 use tokio::signal;
 
@@ -15,9 +16,11 @@ pub async fn start_api_server(
 ) -> Result<(), io::Error> {
     let listener = TcpListener::bind(format!("{}:{}", address, port)).await?;
 
-    let router = create(app_state);
+    let api_prefix = "/api/v1";
 
-    println!("API Server starting at {}:{}", address, port);
+    let router = create(app_state,api_prefix);
+
+    println!("API Server starting at {}:{} with prefix: {}", address, port, api_prefix);
 
     axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal())

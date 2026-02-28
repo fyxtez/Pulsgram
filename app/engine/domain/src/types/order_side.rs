@@ -1,6 +1,9 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
     Buy,  // LONG
     Sell, // SHORT

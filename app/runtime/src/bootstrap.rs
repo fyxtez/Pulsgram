@@ -90,7 +90,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
     let bus = Arc::new(publisher::new_event_bus());
 
     let state = app_state::AppState {
-        dialogs_data:telegram.dialogs_data,
+        dialogs_data: telegram.dialogs_data,
         client: telegram.client.clone(),
         client_dispatcher: telegram.dispatcher.clone(),
         reqwest_client: reqwest_client.clone(),
@@ -102,15 +102,15 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
     Ok(AppRuntime {
         state: shared_state,
         bus,
-        client:telegram.client,
-        client_dispatcher:telegram.dispatcher,
-        dispatcher_id:telegram.dispatcher_id,
-        updates_receiver:telegram.updates_receiver,
+        client: telegram.client,
+        client_dispatcher: telegram.dispatcher,
+        dispatcher_id: telegram.dispatcher_id,
+        updates_receiver: telegram.updates_receiver,
         workers: WorkersConfig {
-            errors_peer:telegram.workers.errors_peer,
+            errors_peer: telegram.workers.errors_peer,
 
             kol_follows_prod: telegram.workers.kol_follows_prod,
-            kol_follows_test:telegram.workers.kol_follows_test,
+            kol_follows_test: telegram.workers.kol_follows_test,
 
             perp_signals_prod: telegram.workers.perp_signals_prod,
             perp_signals_test: telegram.workers.perp_signals_test,
@@ -118,7 +118,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
             perp_kols_prod: telegram.workers.perp_kols_prod,
             perp_kols_test: telegram.workers.perp_kols_test,
 
-            perp_kols_usernames:telegram.workers.perp_kols_usernames,
+            perp_kols_usernames: telegram.workers.perp_kols_usernames,
 
             rs_user_id: config.rs_user_id,
             lcs_user_id: config.lcs_user_id,

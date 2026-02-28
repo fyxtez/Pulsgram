@@ -4,18 +4,7 @@ mod integration_trade_flow {
     use serial_test::serial;
     use tokio::time::{Duration, sleep};
 
-    use crate::{client::BinanceClient, constants};
-
-    fn test_client(url: &str) -> BinanceClient {
-        dotenv::from_filename("app/.env").ok();
-
-        let api_key = std::env::var("BINANCE_API_KEY_TEST").expect("Set BINANCE_API_KEY_TEST");
-
-        let api_secret =
-            std::env::var("BINANCE_API_SECRET_TEST").expect("Set BINANCE_API_SECRET_TEST");
-
-        BinanceClient::new(reqwest::Client::new(), url, &api_key, &api_secret)
-    }
+    use crate::{client::BinanceClient, constants, tests::test_support::test_support::test_client};
 
     async fn cleanup_position(client: &BinanceClient, symbol: Symbol) {
         let positions = client
@@ -36,7 +25,7 @@ mod integration_trade_flow {
             // for the exact same quantity.
             if amt > 0.0 {
                 client
-                    .place_market_order(symbol, &OrderSide::Sell, &amt.to_string())
+                    .place_market_order(symbol, &OrderSide::Sell, amt)
                     .await
                     .expect("failed to cleanup long position");
             }
@@ -47,7 +36,7 @@ mod integration_trade_flow {
             // for the absolute value of the position size.
             if amt < 0.0 {
                 client
-                    .place_market_order(symbol, &OrderSide::Buy, &(-amt).to_string())
+                    .place_market_order(symbol, &OrderSide::Buy, -amt)
                     .await
                     .expect("failed to cleanup short position");
             }
@@ -81,7 +70,7 @@ mod integration_trade_flow {
     async fn test_open_wait_close() {
         let client = test_client(constants::TESTNET_FUTURES);
         let symbol = Symbol::BTC;
-        let qty = "0.01";
+        let qty = 0.01;
 
         cleanup_position(&client, symbol).await;
 
@@ -120,14 +109,14 @@ mod integration_trade_flow {
         cleanup_position(&client, symbol).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, &full_qty.to_string())
+            .place_market_order(symbol, &OrderSide::Buy, full_qty)
             .await
             .expect("first open failed");
 
         sleep(Duration::from_secs(2)).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, &full_qty.to_string())
+            .place_market_order(symbol, &OrderSide::Buy, full_qty)
             .await
             .expect("second open failed");
 
@@ -135,7 +124,7 @@ mod integration_trade_flow {
 
         // First partial close
         client
-            .place_market_order(symbol, &OrderSide::Sell, &half_qty.to_string())
+            .place_market_order(symbol, &OrderSide::Sell, half_qty)
             .await
             .expect("first partial close failed");
 
@@ -143,7 +132,7 @@ mod integration_trade_flow {
 
         // Second partial close
         client
-            .place_market_order(symbol, &OrderSide::Sell, &half_qty.to_string())
+            .place_market_order(symbol, &OrderSide::Sell, half_qty)
             .await
             .expect("second partial close failed");
 
@@ -160,13 +149,13 @@ mod integration_trade_flow {
         cleanup_position(&client, symbol).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, "0.01")
+            .place_market_order(symbol, &OrderSide::Buy, 0.01)
             .await
             .unwrap();
         sleep(Duration::from_secs(2)).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, "0.02")
+            .place_market_order(symbol, &OrderSide::Buy, 0.02)
             .await
             .unwrap();
         sleep(Duration::from_secs(2)).await;
@@ -193,14 +182,14 @@ mod integration_trade_flow {
         cleanup_position(&client, symbol).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, "0.02")
+            .place_market_order(symbol, &OrderSide::Buy, 0.02)
             .await
             .unwrap();
         sleep(Duration::from_secs(2)).await;
 
         // Sell more than long size
         client
-            .place_market_order(symbol, &OrderSide::Sell, "0.03")
+            .place_market_order(symbol, &OrderSide::Sell, 0.03)
             .await
             .unwrap();
         sleep(Duration::from_secs(2)).await;
@@ -237,7 +226,7 @@ mod integration_trade_flow {
 
         let order = client
             // .place_limit_order(symbol, &OrderSide::Buy, "0.01", "1000") // TODO:unrealistic price
-            .place_limit_order(symbol, &OrderSide::Buy, "0.01", "50000")
+            .place_limit_order(symbol, &OrderSide::Buy, 0.01, 50000.0)
             .await
             .unwrap();
 
@@ -260,7 +249,7 @@ mod integration_trade_flow {
         cleanup_position(&client, symbol).await;
 
         client
-            .place_market_order(symbol, &OrderSide::Buy, "0.05")
+            .place_market_order(symbol, &OrderSide::Buy, 0.05)
             .await
             .unwrap();
         sleep(Duration::from_secs(2)).await;
@@ -287,7 +276,7 @@ mod integration_trade_flow {
         cleanup_position(&client, symbol).await;
 
         let result = client
-            .place_market_order(symbol, &OrderSide::Buy, "0.002")
+            .place_market_order(symbol, &OrderSide::Buy, 0.002)
             .await;
 
         assert!(result.is_ok());
@@ -303,7 +292,7 @@ mod integration_trade_flow {
         let symbol = Symbol::BTC;
 
         let result = client
-            .place_market_order(symbol, &OrderSide::Buy, "0.0000001")
+            .place_market_order(symbol, &OrderSide::Buy, 0.0000001)
             .await;
 
         assert!(result.is_err());
