@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     config::Config,
     error::AppError,
+    types::TelegramRuntime,
     utils::{create_reqwest_client, get_build_version},
 };
 use api::start_api_server;
@@ -52,84 +53,7 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
 
     let config = Config::from_env(true)?;
 
-    let ConnectClientReturnType {
-        client,
-        updates_receiver,
-    } = connect_client(
-        "pulsgram.session",
-        "API_ID",
-        "API_HASH",
-        "PHONE_NUMBER",
-        "PASSWORD",
-    )
-    .await?;
-
-    let ConnectClientReturnType {
-        client: client_dispatcher,
-        updates_receiver: _,
-    } = connect_client(
-        "dispatcher.pulsgram.session",
-        "API_ID",
-        "API_HASH",
-        "PHONE_NUMBER_DISPATCHER",
-        "PASSWORD_DISPATCHER",
-    )
-    .await?;
-
-    let dispatcher_me = telegram::get_me(&client_dispatcher).await?;
-    let dispatcher_id = dispatcher_me.id().bare_id();
-
-    let bus = Arc::new(publisher::new_event_bus());
-
-    let dialogs = load_dialogs(&client).await?;
-
-    let dialogs_data = normalize_dialogs_into_data(&dialogs);
-    if !cfg!(feature = "production") {
-        dbg!(&dialogs_data);
-    }
-
-    let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
-    let dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
-    if !cfg!(feature = "production") {
-        dbg!(dialogs_data_from_dispatcher);
-    }
-
-    let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher).await;
-
-    let errors_peer = peers_map_dispatcher
-        .remove(&config.errors_peer_id)
-        .ok_or(AppError::NotFound("errors_peer_id"))?;
-
-    let kol_follows = peers_map_dispatcher
-        .remove(&config.kol_follows_chat_id)
-        .ok_or(AppError::NotFound("kol_follows_chat_id"))?;
-
-    let kol_follows_test = peers_map_dispatcher
-        .remove(&config.kol_follows_test_chat_id)
-        .ok_or(AppError::NotFound("kol_follows_test_chat_id"))?;
-
-    let perp_signals = peers_map_dispatcher
-        .remove(&config.perp_signals_chat_id)
-        .ok_or(AppError::NotFound("perp_signals_chat_id"))?;
-
-    let perp_signals_test = peers_map_dispatcher
-        .remove(&config.perp_signals_test_chat_id)
-        .ok_or(AppError::NotFound("perp_signals_test_chat_id"))?;
-
-    let perp_kols = peers_map_dispatcher
-        .remove(&config.perp_kols_chat_id)
-        .ok_or(AppError::NotFound("perp_kols_chat_id"))?;
-
-    let perp_kols_test = peers_map_dispatcher
-        .remove(&config.perp_kols_test_chat_id)
-        .ok_or(AppError::NotFound("perp_kols_test_chat_id"))?;
-
-    let perp_kols_usernames: Vec<String> = config.perp_kols_usernames;
-
-    // Explicitly asserting ownership dominance.
-    drop(peers_map_dispatcher);
-    drop(dialogs);
-    drop(dialogs_from_dispatcher);
+    let telegram = init_telegram(&config).await?;
 
     let reqwest_client = create_reqwest_client()?;
 
@@ -163,17 +87,12 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
     let filters = extract_supported_filters(&exchange_info, &supported_symbols)?;
     binance_client.set_symbol_filters(filters);
 
-    // Explicitly asserting ownership dominance.
-    drop(supported_symbols);
-
-    let client = Arc::new(client);
-
-    let client_dispatcher = Arc::new(client_dispatcher);
+    let bus = Arc::new(publisher::new_event_bus());
 
     let state = app_state::AppState {
-        dialogs_data,
-        client: client.clone(),
-        client_dispatcher: client_dispatcher.clone(),
+        dialogs_data:telegram.dialogs_data,
+        client: telegram.client.clone(),
+        client_dispatcher: telegram.dispatcher.clone(),
         reqwest_client: reqwest_client.clone(),
         bus: bus.clone(),
     };
@@ -183,28 +102,117 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
     Ok(AppRuntime {
         state: shared_state,
         bus,
-        client,
-        client_dispatcher,
-        dispatcher_id,
-        updates_receiver,
+        client:telegram.client,
+        client_dispatcher:telegram.dispatcher,
+        dispatcher_id:telegram.dispatcher_id,
+        updates_receiver:telegram.updates_receiver,
         workers: WorkersConfig {
-            errors_peer,
+            errors_peer:telegram.workers.errors_peer,
 
-            kol_follows_prod: kol_follows,
-            kol_follows_test,
+            kol_follows_prod: telegram.workers.kol_follows_prod,
+            kol_follows_test:telegram.workers.kol_follows_test,
 
-            perp_signals_prod: perp_signals,
-            perp_signals_test,
+            perp_signals_prod: telegram.workers.perp_signals_prod,
+            perp_signals_test: telegram.workers.perp_signals_test,
 
-            perp_kols_prod: perp_kols,
-            perp_kols_test,
+            perp_kols_prod: telegram.workers.perp_kols_prod,
+            perp_kols_test: telegram.workers.perp_kols_test,
 
-            perp_kols_usernames,
+            perp_kols_usernames:telegram.workers.perp_kols_usernames,
 
             rs_user_id: config.rs_user_id,
             lcs_user_id: config.lcs_user_id,
         },
         binance_client,
+    })
+}
+
+pub async fn init_telegram(config: &Config) -> Result<TelegramRuntime, AppError> {
+    let ConnectClientReturnType {
+        client,
+        updates_receiver,
+    } = connect_client(
+        "pulsgram.session",
+        "API_ID",
+        "API_HASH",
+        "PHONE_NUMBER",
+        "PASSWORD",
+    )
+    .await?;
+
+    let ConnectClientReturnType {
+        client: client_dispatcher,
+        updates_receiver: _,
+    } = connect_client(
+        "dispatcher.pulsgram.session",
+        "API_ID",
+        "API_HASH",
+        "PHONE_NUMBER_DISPATCHER",
+        "PASSWORD_DISPATCHER",
+    )
+    .await?;
+
+    let dispatcher_me = telegram::get_me(&client_dispatcher).await?;
+    let dispatcher_id = dispatcher_me.id().bare_id();
+
+    let dialogs = load_dialogs(&client).await?;
+    let dialogs_data = normalize_dialogs_into_data(&dialogs);
+
+    if !cfg!(feature = "production") {
+        dbg!(&dialogs_data);
+    }
+
+    let dialogs_from_dispatcher = load_dialogs(&client_dispatcher).await?;
+    let dialogs_data_from_dispatcher = normalize_dialogs_into_data(&dialogs_from_dispatcher);
+
+    if !cfg!(feature = "production") {
+        dbg!(&dialogs_data_from_dispatcher);
+    }
+
+    let mut peers_map_dispatcher = build_peers_map_from_dialogs(&dialogs_from_dispatcher).await;
+
+    let workers = WorkersConfig {
+        errors_peer: peers_map_dispatcher
+            .remove(&config.errors_peer_id)
+            .ok_or(AppError::NotFound("errors_peer_id"))?,
+
+        kol_follows_prod: peers_map_dispatcher
+            .remove(&config.kol_follows_chat_id)
+            .ok_or(AppError::NotFound("kol_follows_chat_id"))?,
+
+        kol_follows_test: peers_map_dispatcher
+            .remove(&config.kol_follows_test_chat_id)
+            .ok_or(AppError::NotFound("kol_follows_test_chat_id"))?,
+
+        perp_signals_prod: peers_map_dispatcher
+            .remove(&config.perp_signals_chat_id)
+            .ok_or(AppError::NotFound("perp_signals_chat_id"))?,
+
+        perp_signals_test: peers_map_dispatcher
+            .remove(&config.perp_signals_test_chat_id)
+            .ok_or(AppError::NotFound("perp_signals_test_chat_id"))?,
+
+        perp_kols_prod: peers_map_dispatcher
+            .remove(&config.perp_kols_chat_id)
+            .ok_or(AppError::NotFound("perp_kols_chat_id"))?,
+
+        perp_kols_test: peers_map_dispatcher
+            .remove(&config.perp_kols_test_chat_id)
+            .ok_or(AppError::NotFound("perp_kols_test_chat_id"))?,
+
+        perp_kols_usernames: config.perp_kols_usernames.clone(),
+
+        rs_user_id: config.rs_user_id,
+        lcs_user_id: config.lcs_user_id,
+    };
+
+    Ok(TelegramRuntime {
+        client: Arc::new(client),
+        dispatcher: Arc::new(client_dispatcher),
+        updates_receiver,
+        dispatcher_id,
+        workers,
+        dialogs_data,
     })
 }
 

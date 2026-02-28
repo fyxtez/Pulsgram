@@ -1,5 +1,6 @@
 use crate::error::AppError;
 
+mod types;
 mod bootstrap;
 mod config;
 mod error;
