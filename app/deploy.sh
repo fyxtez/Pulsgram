@@ -8,6 +8,15 @@ if [ -n "$(git status --porcelain)" ]; then
     exit 1
 fi
 
+# Branch safety check
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$BRANCH" != "master" ]; then
+    echo "Not on master branch. Current branch: $BRANCH"
+    echo "Current branch: $BRANCH"
+    exit 1
+fi
+
 # --------------------------
 # LOAD CONFIG FROM .env
 # --------------------------
