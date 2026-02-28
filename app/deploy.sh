@@ -85,6 +85,8 @@ else
     echo "Warning: Built binary not found at $LOCAL_FILE"
 fi
 
+DEPLOY_START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+
 # --------------------------
 # DEPLOYMENT STEP
 # --------------------------
@@ -202,9 +204,18 @@ if [ "$HEALTH_OK" != true ]; then
     exit 1
 fi
 
+# --------------------------
+# FINISH TIME
+# --------------------------
+
+DEPLOY_END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+
 echo "Health check passed! (HTTP 200)"
 echo ""
 echo "Deployment complete!"
+echo ""
+echo "Started at : $DEPLOY_START_TIME"
+echo "Finished at: $DEPLOY_END_TIME"
 echo ""
 echo "Useful commands:"
 echo "   Check logs:        ssh $REMOTE_USER@$REMOTE_HOST 'tail -f $REMOTE_PATH.log'"
