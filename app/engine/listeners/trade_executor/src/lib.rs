@@ -19,6 +19,7 @@ pub async fn run(bus: Arc<EventBus>, client: Arc<BinanceClient>) {
                         .place_minimum_market_order(trade.symbol, &trade.side)
                         .await
                     {
+                        //TODO: Publish event for persistance worker to save it to db if filled/partially filled.
                         Ok(response) => {
                             let status = OrderExecutionStatus::from(&response);
                             handle_order_status(&trade, status);
