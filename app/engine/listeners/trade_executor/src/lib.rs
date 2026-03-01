@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use crate::utils::{OrderExecutionStatus, format_trade_error, handle_order_status};
 
-pub async fn run(bus: Arc<EventBus>, client: BinanceClient) {
+pub async fn run(bus: Arc<EventBus>, client: Arc<BinanceClient>) {
     println!("Trade Executor running...");
     let mut rx = bus.subscribe();
 

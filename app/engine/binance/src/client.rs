@@ -21,6 +21,7 @@ use domain::types::{
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 
+#[derive(Clone)]
 pub struct BinanceClient {
     client: reqwest::Client,
     base_url: String,
@@ -267,57 +268,64 @@ impl BinanceClient {
         self.signed_request(Method::POST, LEVERAGE, query).await
     }
 
-    pub async fn place_limit_order(
-        &self,
-        symbol: Symbol,
-        side: &OrderSide,
-        quantity: f64,
-        price: f64,
-    ) -> Result<FuturesOrderResponse, BinanceError> {
-        let filters = self
-            .symbol_filters
-            .get(&symbol)
-            .ok_or(BinanceError::InvalidInput(format!(
-                "Unknown symbol: {}",
-                symbol
-            )))?;
+pub async fn place_limit_order(
+    &self,
+    symbol: Symbol,
+    side: &OrderSide,
+    quantity: f64,
+    price: f64,
+) -> Result<FuturesOrderResponse, BinanceError> {
+    let filters = self
+        .symbol_filters
+        .get(&symbol)
+        .ok_or(BinanceError::InvalidInput(format!(
+            "Unknown symbol: {}",
+            symbol
+        )))?;
 
-        if quantity < filters.min_qty {
-            return Err(BinanceError::InvalidInput(format!(
-                "Quantity {} below min_qty {}",
-                quantity, filters.min_qty
-            )));
-        }
-
-        let aligned_qty = self.align_to_step(quantity, filters.step_size);
-        if aligned_qty <= 0.0 {
-            return Err(BinanceError::InvalidInput(
-                "Quantity invalid after alignment".into(),
-            ));
-        }
-
-        let aligned_price = self.align_to_step(price, filters.tick_size);
-        if aligned_price <= 0.0 {
-            return Err(BinanceError::InvalidInput(
-                "Price invalid after alignment".into(),
-            ));
-        }
-
-        let quantity_str = self.format_quantity(aligned_qty, filters.step_size);
-        let price_str = self.format_quantity(aligned_price, filters.tick_size);
-
-        let query = build_query(&[
-            ("symbol", symbol.to_string()),
-            ("side", side.to_string()),
-            ("type", "LIMIT".to_string()),
-            ("quantity", quantity_str),
-            ("price", price_str),
-            ("timeInForce", "GTC".to_string()),
-        ]);
-
-        self.signed_request(Method::POST, ORDER, query).await
+    if quantity < filters.min_qty {
+        return Err(BinanceError::InvalidInput(format!(
+            "Quantity {} below min_qty {}",
+            quantity, filters.min_qty
+        )));
     }
 
+    let aligned_qty = self.align_to_step(quantity, filters.step_size);
+    if aligned_qty <= 0.0 {
+        return Err(BinanceError::InvalidInput(
+            "Quantity invalid after alignment".into(),
+        ));
+    }
+
+    let aligned_price = self.align_to_step(price, filters.tick_size);
+    if aligned_price <= 0.0 {
+        return Err(BinanceError::InvalidInput(
+            "Price invalid after alignment".into(),
+        ));
+    }
+
+    let notional = aligned_qty * aligned_price;
+    if notional < filters.min_notional {
+        return Err(BinanceError::InvalidInput(format!(
+            "Notional {} below min_notional {}",
+            notional, filters.min_notional
+        )));
+    }
+
+    let quantity_str = self.format_quantity(aligned_qty, filters.step_size);
+    let price_str = self.format_quantity(aligned_price, filters.tick_size);
+
+    let query = build_query(&[
+        ("symbol", symbol.to_string()),
+        ("side", side.to_string()),
+        ("type", "LIMIT".to_string()),
+        ("quantity", quantity_str),
+        ("price", price_str),
+        ("timeInForce", "GTC".to_string()),
+    ]);
+
+    self.signed_request(Method::POST, ORDER, query).await
+}
     pub async fn get_position_mode(&self) -> Result<PositionModeResponse, BinanceError> {
         self.signed_request(Method::GET, POSITION_MODE, String::new())
             .await
@@ -344,6 +352,17 @@ impl BinanceClient {
 
         self.signed_request(Method::POST, POSITION_MODE, query)
             .await
+    }
+
+    
+    pub async fn keepalive_listen_key(&self, listen_key: &str) -> Result<(), BinanceError> {
+        let query = build_query(&[("listenKey", listen_key.to_string())]);
+
+        let _: serde_json::Value = self
+            .api_key_request(Method::PUT, LISTEN_KEY, Some(query))
+            .await?;
+
+        Ok(())
     }
 
     pub async fn cancel_order(

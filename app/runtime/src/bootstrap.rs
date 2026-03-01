@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::{
     config::Config,
@@ -44,7 +44,8 @@ pub struct AppRuntime {
     pub updates_receiver: UnboundedReceiver<UpdatesLike>,
     dispatcher_id: i64,
     pub workers: WorkersConfig,
-    pub binance_client: BinanceClient,
+    pub binance_client: Arc<BinanceClient>,
+    pub listen_key: String,
 }
 
 pub async fn bootstrap() -> Result<AppRuntime, AppError> {
@@ -99,6 +100,8 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
 
     let shared_state = Arc::new(state);
 
+    let listen_key = binance_client.create_listen_key().await?;
+
     Ok(AppRuntime {
         state: shared_state,
         bus,
@@ -123,7 +126,8 @@ pub async fn bootstrap() -> Result<AppRuntime, AppError> {
             rs_user_id: config.rs_user_id,
             lcs_user_id: config.lcs_user_id,
         },
-        binance_client,
+        binance_client: Arc::new(binance_client),
+        listen_key,
     })
 }
 
@@ -266,8 +270,29 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
 
     tokio::spawn(trade_executor::run(
         runtime.bus.clone(),
-        runtime.binance_client,
+        runtime.binance_client.clone(),
     ));
+
+    let client = runtime.binance_client.clone();
+    let listen_key = runtime.listen_key.clone();
+
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(30 * 60));
+
+        loop {
+            interval.tick().await;
+
+            match client.keepalive_listen_key(&listen_key).await {
+                Ok(_) => {
+                    #[cfg(not(feature = "production"))]
+                    println!("[LISTEN_KEY] Keepalive refreshed successfully");
+                }
+                Err(e) => {
+                    eprintln!("[LISTEN_KEY] Keepalive FAILED: {:?}", e);
+                }
+            }
+        }
+    });
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"
