@@ -26,7 +26,8 @@ pub struct FuturesAsset {
 
 #[derive(Debug, Deserialize)]
 pub struct TickerPriceResponse {
-    pub _symbol: String,
+    #[allow(dead_code)]
+    pub symbol: String,
     pub price: String,
 }
 

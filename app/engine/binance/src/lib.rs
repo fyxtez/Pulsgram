@@ -1,4 +1,4 @@
-mod response_types;
+pub mod response_types;
 
 pub mod client;
 pub mod constants;
