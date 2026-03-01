@@ -1,4 +1,5 @@
 mod cors;
+#[cfg(not(feature = "production"))]
 mod dev;
 mod ping;
 

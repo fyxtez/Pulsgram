@@ -1,16 +1,9 @@
-use axum::{Router, routing::post};
+use axum::Router;
 
-#[cfg(not(feature = "production"))]
+use axum::routing::post;
+
 pub mod trade;
 
 pub fn routes() -> Router {
-    #[cfg(not(feature = "production"))]
-    {
         Router::new().route("/trade-approved", post(trade::dev_trade_approved))
-    }
-
-    #[cfg(feature = "production")]
-    {
-        Router::new()
-    }
 }

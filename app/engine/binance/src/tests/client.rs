@@ -258,8 +258,6 @@ mod tests {
             .await
             .expect("failed to fetch exchange info");
 
-        println!("Total symbols: {}", info.symbols.len());
-
         assert!(!info.symbols.is_empty());
     }
 }
