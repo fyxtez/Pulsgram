@@ -1,52 +1,18 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use crate::{
     config::Config,
     error::AppError,
-    types::TelegramRuntime,
+    types::{AppRuntime, TelegramRuntime, WorkersConfig},
     utils::{create_reqwest_client, get_build_version},
 };
 use api::start_api_server;
-use app_state::AppState;
-use binance::{client::BinanceClient, filters::extract_supported_filters};
+use binance::filters::extract_supported_filters;
 use domain::types::symbol::Symbol;
-use publisher::EventBus;
 use telegram::{
     client::{ConnectClientReturnType, connect_client, handle_updates},
     dialogs::{build_peers_map_from_dialogs, load_dialogs, normalize_dialogs_into_data},
 };
-use telegram_types::{Client, PeerRef, UpdatesLike};
-use tokio::sync::mpsc::UnboundedReceiver;
-
-pub struct WorkersConfig {
-    pub errors_peer: PeerRef,
-
-    pub kol_follows_prod: PeerRef,
-    pub kol_follows_test: PeerRef,
-
-    pub perp_signals_prod: PeerRef,
-    pub perp_signals_test: PeerRef,
-
-    pub perp_kols_prod: PeerRef,
-    pub perp_kols_test: PeerRef,
-
-    pub perp_kols_usernames: Vec<String>,
-
-    pub rs_user_id: i64,
-    pub lcs_user_id: i64,
-}
-
-pub struct AppRuntime {
-    pub state: Arc<AppState>,
-    pub bus: Arc<EventBus>,
-    pub client: Arc<Client>,
-    pub client_dispatcher: Arc<Client>,
-    pub updates_receiver: UnboundedReceiver<UpdatesLike>,
-    dispatcher_id: i64,
-    pub workers: WorkersConfig,
-    pub binance_client: Arc<BinanceClient>,
-    pub listen_key: String,
-}
 
 pub async fn bootstrap() -> Result<AppRuntime, AppError> {
     let build_version = get_build_version();
@@ -268,31 +234,19 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         runtime.workers.perp_kols_usernames,
     ));
 
+    #[cfg(not(feature = "production"))]
+    tokio::spawn(market_data::run(Symbol::default_trading_set()));
+
+    #[cfg(not(feature = "production"))]
+    tokio::spawn(listen_key_keepalive::run(
+        runtime.binance_client.clone(),
+        runtime.listen_key.clone(),
+    ));
+
     tokio::spawn(trade_executor::run(
         runtime.bus.clone(),
         runtime.binance_client.clone(),
     ));
-
-    let client = runtime.binance_client.clone();
-    let listen_key = runtime.listen_key.clone();
-
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(30 * 60));
-
-        loop {
-            interval.tick().await;
-
-            match client.keepalive_listen_key(&listen_key).await {
-                Ok(_) => {
-                    #[cfg(not(feature = "production"))]
-                    println!("[LISTEN_KEY] Keepalive refreshed successfully");
-                }
-                Err(e) => {
-                    eprintln!("[LISTEN_KEY] Keepalive FAILED: {:?}", e);
-                }
-            }
-        }
-    });
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"

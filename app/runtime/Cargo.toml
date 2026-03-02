@@ -17,6 +17,8 @@ errors_reporter = { path = "../engine/listeners/errors_reporter" }
 perp_signals = { path = "../engine/listeners/perp_signals" }
 trade_executor = {path = "../engine/listeners/trade_executor"}
 binance = {path = "../engine/binance"}
+market_data = {path = "../engine/listeners/market_data"}
+listen_key_keepalive = {path = "../engine/listeners/listen_key_keepalive"}
 app_state = {path = "../engine/app_state"}
 api = {path = "../engine/api"}
 domain = {path = "../engine/domain"}

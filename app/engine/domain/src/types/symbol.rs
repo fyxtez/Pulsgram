@@ -14,6 +14,21 @@ pub enum Symbol {
     ASTER,
 }
 
+impl Symbol {
+    pub fn default_trading_set() -> Vec<Symbol> {
+        vec![
+            Symbol::BTC,
+            Symbol::ETH,
+            Symbol::SOL,
+            Symbol::XRP,
+            Symbol::BNB,
+            Symbol::TRX,
+            Symbol::ADA,
+            Symbol::ASTER,
+        ]
+    }
+}
+
 impl fmt::Display for Symbol {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
