@@ -1,3 +1,9 @@
+pub mod account;
+pub mod fees;
+pub mod listen_key;
+pub mod market;
+pub mod orders;
+
 pub const OPEN_ORDERS: &str = "fapi/v1/openOrders";
 pub const COMMISSION_RATE: &str = "fapi/v1/commissionRate";
 pub const ACCOUNT_INFO: &str = "fapi/v3/account";

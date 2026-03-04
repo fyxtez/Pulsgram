@@ -1,4 +1,4 @@
-use crate::error::{BinanceApiErrorResponse, BinanceError};
+use crate::errors::{BinanceApiErrorResponse, BinanceError};
 use hmac::{Hmac, Mac};
 use reqwest::Method;
 use sha2::Sha256;

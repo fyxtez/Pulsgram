@@ -1,9 +1,11 @@
+pub mod quantize;
+
 use std::collections::HashMap;
 
 use domain::types::symbol::{Symbol, SymbolFilters};
 
 use crate::{
-    error::BinanceError,
+    errors::BinanceError,
     response_types::{ExchangeFilter, ExchangeInfoResponse, ExchangeSymbol},
 };
 

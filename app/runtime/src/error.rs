@@ -2,7 +2,7 @@ use std::env::VarError;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-use binance::error::BinanceError;
+use binance::errors::BinanceError;
 use telegram::errors::TelegramError;
 
 #[derive(Debug)]

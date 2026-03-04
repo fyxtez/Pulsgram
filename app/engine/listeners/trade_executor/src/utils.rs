@@ -1,4 +1,4 @@
-use binance::{error::BinanceError, response_types::FuturesOrderResponse};
+use binance::{errors::BinanceError, response_types::FuturesOrderResponse};
 use domain::types::trade::TradeApproved;
 
 pub enum OrderExecutionStatus {

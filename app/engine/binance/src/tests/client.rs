@@ -6,7 +6,7 @@ mod tests {
 
     use crate::tests::test_support::test_support::test_client;
     use crate::utils::build_query;
-    use crate::{constants, error::BinanceError};
+    use crate::{constants, errors::BinanceError};
 
     #[tokio::test]
     #[ignore]
