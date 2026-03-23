@@ -194,16 +194,16 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         runtime.dispatcher_id,
     ));
 
-    tokio::spawn(perp_signals::run(
-        Arc::clone(&runtime.bus),
-        Arc::clone(&runtime.client_dispatcher),
-        runtime.workers.lcs_user_id,
-        if cfg!(feature = "production") {
-            runtime.workers.perp_signals_prod
-        } else {
-            runtime.workers.perp_signals_test
-        },
-    ));
+    // tokio::spawn(perp_signals::run(
+    //     Arc::clone(&runtime.bus),
+    //     Arc::clone(&runtime.client_dispatcher),
+    //     runtime.workers.lcs_user_id,
+    //     if cfg!(feature = "production") {
+    //         runtime.workers.perp_signals_prod
+    //     } else {
+    //         runtime.workers.perp_signals_test
+    //     },
+    // ));
 
     tokio::spawn(errors_reporter::run(
         Arc::clone(&runtime.client_dispatcher),
@@ -243,10 +243,10 @@ pub async fn run(runtime: AppRuntime) -> Result<(), AppError> {
         runtime.listen_key.clone(),
     ));
 
-    tokio::spawn(trade_executor::run(
-        runtime.bus.clone(),
-        runtime.binance_client.clone(),
-    ));
+    // tokio::spawn(trade_executor::run(
+    //     runtime.bus.clone(),
+    //     runtime.binance_client.clone(),
+    // ));
 
     let address = if cfg!(feature = "production") {
         "0.0.0.0"
